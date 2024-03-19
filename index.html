@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1, width=device-width">
+        <title>채팅 참여 게임</title>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Dokdo&family=Noto+Sans+KR&display=swap" rel="stylesheet">
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Noto Sans KR', sans-serif;
+                /*overflow:hidden;*/
+            }
+
+            canvas {
+                display: block;
+                margin: 0;
+                padding: 0;
+                border: none;
+                font-family: 'Noto Sans KR', sans-serif;
+                image-rendering: pixelated;
+            }
+
+            .dead {
+                color: gray;
+            }
+        </style>
+
+        <!-- css for slider switch -->
+        <style>
+            :root {
+                --switch-width: 40px;
+                --switch-height: 24px;
+                --switch-slider-size: 16px;
+            }
+
+            .switch {
+              position: relative;
+              display: inline-block;
+              width: var(--switch-width);
+              height: var(--switch-height);
+            }
+
+            .switch input {
+              opacity: 0;
+              width: 0;
+              height: 0;
+            }
+
+            .slider {
+              position: absolute;
+              cursor: pointer;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background-color: #ccc;
+              -webkit-transition: .4s;
+              transition: .4s;
+            }
+
+            .slider:before {
+              position: absolute;
+              content: "";
+              height: var(--switch-slider-size);
+              width: var(--switch-slider-size);
+              left: 4px;
+              bottom: 4px;
+              background-color: white;
+              -webkit-transition: .4s;
+              transition: .4s;
+            }
+
+            input:checked + .slider {
+              background-color: #2196F3;
+            }
+
+            input:focus + .slider {
+              box-shadow: 0 0 1px #2196F3;
+            }
+
+            input:checked + .slider:before {
+              -webkit-transform: translateX(var(--switch-slider-size));
+              -ms-transform: translateX(var(--switch-slider-size));
+              transform: translateX(var(--switch-slider-size));
+            }
+
+            /* Rounded sliders */
+            .slider.round {
+              border-radius: var(--switch-height);
+            }
+
+            .slider.round:before {
+              border-radius: 50%;
+            }
+
+            /* ruler */
+            #ruler {
+                position: absolute;
+                top: 0;
+                left: 0;
+                display: flex;
+                overflow: hidden;
+            }
+
+            #rulerVertical {
+                position: absolute;
+                top: 0;
+                left: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .scaleNumber {
+                text-align: center;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                font-size: 12px;
+                color: white;
+            }
+
+            #gameScreenParent {
+                position: relative;
+            }
+
+            #mainMenu {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 200px;
+            }
+        </style>
+    </head>
+    <body>
+        hello world!
+        <!-- <div id="status"></div> -->
+        <div id="gameScreenParent">
+            <div id="ruler"></div>
+            <div id="rulerVertical"></div>
+            <canvas></canvas>
+        </div>
+
+
+        <div id="fpsDiv" style="position: fixed; top: 0; left: 0"></div>
+
+        <!-- Settings -->
+        <div id="settings">
+            <label>격자보기</label>
+            <input type="checkbox" id="seeGrid" checked onclick="updateCheckbox(this)">
+            <br>
+
+            <label>경로보기</label>
+            <input type="checkbox" id="seePath" checked onclick="updateCheckbox(this)">
+            <br>
+
+            <label>히트박스보기</label>
+            <input type="checkbox" id="seeHitBox" checked onclick="updateCheckbox(this)">
+            <br>
+
+            <label>배경보기</label>
+            <input type="checkbox" id="seeBackground" checked onclick="updateCheckbox(this)">
+            <br>
+
+            <label>대기시 주인공 추격</label>
+            <input type="checkbox" id="goToMainCharacter" onclick="updateCheckbox(this)">
+            <br>
+
+            <label>모두 불사</label>
+            <input type="checkbox" id="isZombi" onclick="updateCheckbox(this)">
+            <br>
+
+            <label>명령어 채팅(!로 시작)만 인식</label>
+            <input type="checkbox" id="commandsOnly" onclick="updateCheckbox(this)">
+            <br>
+
+            <label>말풍선 보기</label>
+            <input type="checkbox" id="seeChattings" onclick="updateCheckbox(this)">
+            <br>
+
+            <label>인원 그만 받기</label>
+            <input type="checkbox" id="noMoreNewPlayers" onclick="updateCheckbox(this)">
+            <br>
+
+            <label>Max 인원</label>
+            <input type="number" id="maxPlayers" value="5000" checked onchange="updateNumberOption(this)">
+            <br>
+
+            <label>Max 생존 인원</label>
+            <input type="number" id="maxAlivePlayers" value="500" checked onchange="updateNumberOption(this)">
+            <br>
+
+            <label>격자 당 최대인원</label>
+            <input type="number" id="maxPlayersPerTile" value="1" checked onchange="updateNumberOption(this)">
+            <br>
+
+            <label>초당 프레임 제한</label>
+            <input type="number" id="fps" value="60" checked onchange="updateNumberOption(this)">
+            <br>
+
+            <label>말풍선 보이는 시간</label>
+            <input type="number" id="chattingTimeout" value="10000" checked onchange="updateNumberOption(this)">
+            <br>
+
+            <label>데미지 보기 (최대 하나씩)</label>
+            <input type="checkbox" id="seeDamages" checked onclick="updateCheckbox(this)">
+            <br>
+
+            <label>데미지 보이는 시간</label>
+            <input type="number" id="damageMsgTimeout" value="1000" checked onchange="updateNumberOption(this)">
+            <br>
+
+            <label>팀킬</label>
+            <input type="checkbox" id="teamKill" onclick="updateCheckbox(this)">
+            <br>
+
+        </div>
+
+        <!-- Main menu -->
+        <div id="mainMenu">
+            <select id="modeSelected">
+                <option value="survival">Survival Mode</option>
+                <option value="chatVsChat">Chat vs Chat Mode</option>
+                <option value="ox">OX퀴즈 Mode</option>
+            </select>
+            <button onclick="goToModeMenu()">Start</button>
+            <button>Credit</button>
+        </div>
+
+        <script>
+            const modeSelected = document.getElementById("modeSelected")
+            function goToModeMenu() {
+                gameOptions["mode"] = modeSelected.value
+
+                document.getElementById("mainMenu").style.display = "none"
+                document.getElementById("modeMenu").style.display = "block"
+
+                switch(gameOptions["mode"]) {
+                    case "survival":
+                        addTeamMenu(2)
+                        break
+                    case "chatVsChat":
+                        addTeamMenu(1)
+                        addTeamMenu(2)
+                        break
+                    case "ox":
+                        addTeamMenu(2)
+                        break
+                }
+            }
+        </script>
+
+        <!-- Mode menus -->
+        <div id="modeMenu" style="display: none">
+            <div id="modeMenuTeams">
+                <div><span style="color: green">Team1</span>: My character</div>
+                <div id="teamMenu"></div>
+            </div>
+            <button>Settings</button>
+            <button>Start</button>
+        </div>
+
+        <!-- Survival Mode -->
+        <div>
+
+        </div>
+
+        <script>
+            const teamMenu = document.getElementById("teamMenu")
+            const chatChannel = {}
+
+            const teamColorCode = {0: "rgba(0, 0, 0, 1)", 1: "rgba(0, 128, 0, 1)", 2: "rgba(255, 0, 0, 1)", 3: "rgba(0, 0, 255, 1)"}
+            const platformEmoji = {"chzzk": "⚡", "youtube": "🔺", "afreecatv": "🟦", "twitch": "💜"}
+
+            function addTeamMenu(team) {
+                let teamColor = teamColorCode[team] || "rgba(0, 0, 0, 1)"
+
+                let innerHtml = `
+                <div>
+                    <span style="color: ${teamColor}">Team${team}</span>: Chats
+                    <select>
+                        <option value="chzzk">치지직</option>
+                        <option value="youtube" disabled>유튜브</option>
+                        <option value="afreecatv" disabled>아프리카tv</option>
+                        <option value="twitch" disabled>트위치</option>
+                    </select>
+                </div>
+                `
+
+                // if select option === chzzk
+                innerHtml += `
+                <div>
+                    <label for="channelId${team}">Channel ID: (치지직 방송 주소의 빨간 부분: https://chzzk.naver.com/<span style="color: red">bb382c2c0cc9fa7c86ab3b037fb5799c</span> )</label><br>
+                    <input type="text" id="channelId${team}" name="channelId${team}" placeholder="bb382c2c0cc9fa7c86ab3b037fb5799c"><br>
+                    <button onclick="goToGetChatChannelId(${team})">goToGetChatChannelId</button><br>
+
+                    <div id="toGetChatChannelId${team}"></div>
+
+                    <div id="chatChannelIdDiv${team}" style="display: none;">
+                        <label for="chatChannelId${team}">Chat Channel ID: (위 링크의 빨간 부분: "chatChannelId": "<span style="color: red">여기이거</span>",)</label><br>
+                        <input type="text" id="chatChannelId${team}" name="chatChannelId${team}"><br>
+                        <button onclick="goToGetAccessToken(${team})">goToGetAccessToken</button><br>
+                    </div>
+
+                    <div id="toGetAccessToken${team}"></div>
+
+                    <div id="accessTokenDiv${team}" style="display: none;">
+                        <label for="accessToken${team}">Access Token: (위 링크의 빨간 부분: "accessToken": "<span style="color: red">아주 긴 여기 이거</span>",)</label><br>
+                        <input type="text" id="accessToken${team}" name="accessToken${team}"><br>
+                        <button onclick="connect(${team}, 'chzzk')">Connect</button>
+                    </div>
+                </div>
+                `
+
+                const div = document.createElement("div");
+                div.innerHTML = innerHtml;
+                teamMenu.appendChild(div);
+
+                chatChannel[team] = {channelId: "", chatChannelId: "", accessToken: ""}
+
+            }
+
+
+        </script>
+
+        <!-- For connections -->
+        <!-- <div>
+            <label for="channelId">Channel ID: (치지직 방송 주소의 빨간 부분: https://chzzk.naver.com/<span style="color: red">bb382c2c0cc9fa7c86ab3b037fb5799c</span> )</label><br>
+            <input type="text" id="channelId" name="channelId" placeholder="bb382c2c0cc9fa7c86ab3b037fb5799c"><br>
+            <button onclick="goToGetChatChannelId()">goToGetChatChannelId</button><br>
+
+            <div id="toGetChatChannelId"></div>
+
+            <div id="chatChannelIdDiv" style="display: none;">
+                <label for="chatChannelId">Chat Channel ID: (위 링크의 빨간 부분: "chatChannelId": "<span style="color: red">여기이거</span>",)</label><br>
+                <input type="text" id="chatChannelId" name="chatChannelId"><br>
+                <button onclick="goToGetAccessToken()">goToGetAccessToken</button><br>
+            </div>
+
+            <div id="toGetAccessToken"></div>
+
+            <div id="accessTokenDiv" style="display: none;">
+                <label for="accessToken">Access Token: (위 링크의 빨간 부분: "accessToken": "<span style="color: red">아주 긴 여기 이거</span>",)</label><br>
+                <input type="text" id="accessToken" name="accessToken"><br>
+                <button onclick="connect()">Connect</button>
+            </div>
+        </div> -->
+
+        <!-- List of players -->
+        <label>
+            Hide Dead Players
+            <label class="switch">
+                <input type="checkbox" id="toggleButton">
+                <span class="slider round"></span>
+            </label>
+        </label>
+
+        <table id="playerListByName">
+            <tr>
+                <th>Name</th>
+                <th>Kill</th>
+                <th>Death</th>
+                <th>Chatting</th>
+            </tr>
+        </table>
+
+        <table id="playerListByKill">
+            <tr>
+                <th>Name</th>
+                <th>Kill</th>
+                <th>Death</th>
+                <th>Last words</th>
+            </tr>
+        </table>
+
+
+        <!-- Settings -->
+        <script>
+            const commandMark = '!'
+
+            // When chaning this, you should also change it in settings checkboxes or inputboxes
+            let gameOptions = {
+                seeGrid: true,
+                seePath: true,
+                seeHitBox: true,
+                seeBackground: true,
+                commandsOnly: false,
+                goToMainCharacter: false,
+                isZombi: false,
+                seeChattings: true,
+                noMoreNewPlayers: false,
+                maxPlayers: 5000,
+                maxAlivePlayers: 500,
+                maxPlayersPerTile: 1,
+                fps: 60,
+                chattingTimeout: 10000,
+                seeDamages: true,
+                damageMsgTimeout: 1000,
+                teamKill: false,
+            };
+
+            function updateCheckbox(checkbox) {
+                gameOptions[checkbox.id] = checkbox.checked;
+                console.log(checkbox.id + ": " + gameOptions[checkbox.id]);
+            }
+
+            function updateNumberOption(input) {
+                gameOptions[input.id] = input.value;
+                console.log(input.id + ": " + gameOptions[input.id]);
+            }
+        </script>
+
+        <!-- network -->
+        <script>
+            // let serviceName = "치지직"
+
+            function goToGetChatChannelId(team) {
+                chatChannel[team].channelId = document.getElementById(`channelId${team}`).value;
+                const channelId = chatChannel[team].channelId
+                const toGetChatChannelId = document.getElementById(`toGetChatChannelId${team}`);
+                const link = document.createElement("a");
+                link.textContent = "chatChannelId";
+                link.href = `https://api.chzzk.naver.com/polling/v2/channels/${channelId}/live-status`;
+                link.target = "_blank";
+                toGetChatChannelId.appendChild(link);
+                document.getElementById(`chatChannelIdDiv${team}`).style.display = "block";
+            }
+
+            function goToGetAccessToken(team) {
+                chatChannel[team].chatChannelId = document.getElementById(`chatChannelId${team}`).value;
+                const chatChannelId = chatChannel[team].chatChannelId
+                const toGetAccessToken = document.getElementById(`toGetAccessToken${team}`);
+                const link = document.createElement("a");
+                link.textContent = "accessToken";
+                link.href = `https://comm-api.game.naver.com/nng_main/v1/chats/access-token?channelId=${chatChannelId}&chatType=STREAMING`;
+                link.target = "_blank";
+                toGetAccessToken.appendChild(link);
+                document.getElementById(`accessTokenDiv${team}`).style.display = "block";
+            }
+
+            function connect(team, platform) {
+                chatChannel[team].accessToken = document.getElementById(`accessToken${team}`).value;
+                const accessToken = chatChannel[team].accessToken
+                // Add your connection logic here
+                console.log("Connecting with access token: " + accessToken);
+                const serverId = Math.abs(
+                    chatChannel[team].chatChannelId.split("")
+                        .map(c => c.charCodeAt(0))
+                        .reduce((a, b) => a + b)
+                ) % 9 + 1;
+
+                const ws = new WebSocket(`wss://kr-ss${serverId}.chat.naver.com/chat`);
+
+                ws.onopen = () => {
+                    // Send the initial message here, after the connection is open
+                    ws.send(JSON.stringify({
+                        bdy: {
+                            accTkn: accessToken,
+                            auth: "READ",
+                            devType: 2001
+                        },
+                        cmd: 100,
+                        tid: 1,
+                        cid: chatChannel[team].chatChannelId,
+                        svcid: "game",
+                        ver: "2"
+                    }));
+                };
+
+                ws.onmessage = (m) => {
+                    const jsonParsed = JSON.parse(m.data)
+
+                    if (jsonParsed.ver === "2") {
+                        ws.send(JSON.stringify({
+                            "ver": "2",
+                            "cmd": 10000
+                        }))
+                    } else {
+                        onmessage(jsonParsed, team, platform)
+                    }
+
+                    // console.log(JSON.parse(m.data));
+                };
+            }
+
+            function onmessage(data, team, platform) {
+                if (data.bdy && data.bdy.length) {
+                    try {
+                        const profile = JSON.parse(data.bdy[0].profile)
+                        const msg = data.bdy[0].msg
+                        if (profile && msg) {
+                            if (gameOptions.commandsOnly) {
+                                if (msg.startsWith(commandMark)) {
+                                    messageToGame(profile.nickname, msg, team, platform)
+                                }
+                            } else {
+                                messageToGame(profile.nickname, msg, team, platform)
+                            }
+                        }
+                    } catch (error) {
+                        console.log(data)
+                    }
+                    // console.log(`${name} : ${msg}`)
+                }
+            }
+        </script>
+
+        <!-- game control -->
+        <script>
+            function messageToGame(nameFromChat, msg, team, platform) {
+                const name = platformEmoji[platform] + nameFromChat
+                if (players[name]) {
+                    changeDestination(name, Math.min(msg.length * 20, 900), Math.min(msg.length * 20, 900))
+                    players[name].chatting = msg
+                    players[name].chattingTimeout = gameOptions.chattingTimeout
+                } else {
+                    const numberOfPlayers = Object.keys(players).length
+                    const numberOfAlivePlayers = alivePlayers.length
+                    if (numberOfPlayers < gameOptions.maxPlayers && numberOfAlivePlayers < gameOptions.maxAlivePlayers && (!gameOptions.noMoreNewPlayers)) {
+                        addPlayer(Math.round(900 * Math.random()), Math.round(900 * Math.random()), Math.round(900 * Math.random()), Math.round(900 * Math.random()), name, "swordman")
+                        players[name].team = team
+                    }
+                }
+            }
+        </script>
+
+        <!-- game logic -->
+        <script>
+            // This should not be changed during game. change this before animate() starts
+            // 1. because of playersAt dictionary
+            // 2. because of change while in a middle of the frame loop (<= this can be avoided by putting change at the end of the loop)
+            xtiles = 64
+            ytiles = 64
+            tilesize = 16
+
+        </script>
+        <script>
+            const ruler = document.getElementById("ruler")
+            const rulerVertical = document.getElementById("rulerVertical")
+            for (let i = 1; i <= xtiles; i++) {
+                const scaleNumber = document.createElement("div")
+                scaleNumber.className = "scaleNumber"
+                scaleNumber.innerHTML = i
+                scaleNumber.style.width = tilesize + "px"
+                ruler.appendChild(scaleNumber)
+            }
+            for (let i = 1; i <= ytiles; i++) {
+                const scaleNumber = document.createElement("div")
+                scaleNumber.className = "scaleNumber"
+                scaleNumber.innerHTML = i
+                scaleNumber.style.height = tilesize + "px"
+                rulerVertical.appendChild(scaleNumber)
+            }
+
+            ruler.style.width = xtiles * tilesize + "px"
+        </script>
+        <script>
+            const canvas = document.querySelector('canvas')
+            const ratio = window.devicePixelRatio || 1
+
+            // canvas.width = xtiles * tilesize
+            // canvas.height = ytiles * tilesize
+
+            setCanvasRatio()
+
+            // let newratio = 1
+            window.addEventListener("resize", () => {
+                setCanvasRatio()
+            })
+
+            function setCanvasRatio() {
+                const newratio = window.devicePixelRatio || 1
+
+                canvas.width = xtiles * tilesize * newratio
+                canvas.height = ytiles * tilesize * newratio
+                canvas.style.width = xtiles * tilesize + 'px'
+                canvas.style.height = ytiles * tilesize + 'px'
+                canvas.getContext('2d').scale(newratio, newratio)
+            }
+            // window.addEventListener("resize", () => {
+            //     newratio = window.devicePixelRatio || 1
+            // })
+
+            const ctx = canvas.getContext('2d')
+
+            canvas.style.backgroundColor = "#282a36"
+
+            // const status = document.getElementById("status")
+        </script>
+
+        <script>
+            const lowResCanvas = document.createElement('canvas')
+            const lowResCtx = lowResCanvas.getContext('2d')
+            let lowRatio = 1
+            if (ratio % 1 === 0) {
+                lowRatio = 1
+            } else if (ratio * 2 % 1 === 0) {
+                lowRatio = 1.5
+            }
+
+            // This keeps the initial resolution even if magnified
+            lowResCanvas.width = xtiles * tilesize * lowRatio
+            lowResCanvas.height = ytiles * tilesize * lowRatio
+            lowResCanvas.style.width = xtiles * tilesize + 'px'
+            lowResCanvas.style.height = ytiles * tilesize + 'px'
+            lowResCtx.scale(lowRatio, lowRatio)
+        </script>
+
+        <script>
+            // const fps = 30
+            let basespeed = 0.03 * (tilesize / 32)
+            let attShowDuration = 500
+            let arrowLife = 400
+            // let arrowSpeed = 0.12
+
+            let localUserName = "my"
+
+            function updatePlayers(deltatime) {
+                //console.log(Math.floor(deltatime))
+                for (const name of alivePlayers) {
+                    const player = players[name]
+
+                    // Move
+                    const dx = player.xto - player.x
+                    const dy = player.yto - player.y
+                    const dl = Math.sqrt(dx * dx  + dy * dy)
+                    let isMoved = false
+
+                    const speed = player.speed
+
+                    if (dl > speed * deltatime || player.force > 0) {
+                        xlater = ((player.x + speed * deltatime * dx / dl) + (xtiles * tilesize)) % (xtiles * tilesize)
+                        ylater = ((player.y + speed * deltatime * dy / dl) + (ytiles * tilesize)) % (ytiles * tilesize)
+
+                        if (player.force > 0) {
+                            xlater = ((xlater + player.force * deltatime * Math.cos(player.forceangle)) + (xtiles * tilesize)) % (xtiles * tilesize)
+                            ylater = ((ylater + player.force * deltatime * Math.sin(player.forceangle)) + (ytiles * tilesize)) % (ytiles * tilesize)
+
+                            player.forceduration = player.forceduration - deltatime
+                            if (player.forceduration < 0) {
+                                player.force = 0
+                                changeDestination(player.name, player.xto, player.yto)
+                            }
+                        }
+
+                        const oldAt = Math.floor(player.x / tilesize) + Math.floor(player.y / tilesize) * xtiles
+                        const newAt = Math.floor(xlater / tilesize) + Math.floor(ylater / tilesize) * xtiles
+
+                        if (oldAt !== newAt) {
+                            if (getplayersAt(newAt).size < gameOptions.maxPlayersPerTile) {
+                                player.x = xlater
+                                player.y = ylater
+                                isMoved = true
+
+                                getplayersAt(oldAt).delete(player.name)
+                                getplayersAt(newAt).add(player.name)
+                            } else {
+                                // Stopped due to blocking => destination to the main character position at this moment
+                                if (gameOptions.goToMainCharacter && player.name !== localUserName) {
+                                    changeDestination(player.name, players[localUserName].x, players[localUserName].y)
+                                }
+                            }
+                        } else {
+                            player.x = xlater
+                            player.y = ylater
+                            isMoved = true
+                        }
+                    } else {
+                        // Idle => destination to the main character position at this moment
+                        if (gameOptions.goToMainCharacter && player.name !== localUserName) {
+                            changeDestination(player.name, players[localUserName].x, players[localUserName].y)
+                        }
+                    }
+
+                    // Motion
+                    const maxTicks = sprite[player.sprite][player.motion].crops.length * sprite[player.sprite][player.motion].holds
+                    player.animationTick = (player.animationTick + 1)
+
+                    if (isMoved && (player.state === "idle")) {
+                        changePlayerState(player, "walk")
+                    } else if (!isMoved && (player.state === "walk")) {
+                        changePlayerState(player, "idle")
+                    } else if ((player.state === "attack1") && player.animationTick === maxTicks) {
+                        changePlayerState(player, "idle")
+                    }
+
+                    player.animationTick = player.animationTick % maxTicks
+
+                    // Attack
+                    player.cool -= deltatime
+                    if (player.cool < 0) {
+                        player.cool = branches[player.branch].cool
+
+                        // Projectile
+                        const newProjectiles = branches[player.branch].projectiles
+
+                        for (const projectile of newProjectiles) {
+                            projectiles.push({
+                                x: player.x,
+                                y:player.y,
+                                lifetime: projectile.lifetime,
+                                nHits: projectile.nHits,
+                                vx: projectile.arrowSpeed * Math.cos(player.theta + projectile.arrowAngle),
+                                vy: projectile.arrowSpeed * Math.sin(player.theta + projectile.arrowAngle),
+                                damage: projectile.damage,
+                                owner: player.name,
+                                team: player.team})
+                        }
+
+                        // Hitscan (instantly)
+                        const newHitscans = branches[player.branch].hitscans
+
+                        for (const hitscan of newHitscans) {
+                            const index = Math.floor((player.x + hitscan.dx) / tilesize) + Math.floor((player.y + hitscan.dy) / tilesize) * xtiles
+
+                            // push effect
+                            const targets = getplayersAt(index)
+                            for (const target of targets) {
+                                damageTarget(target, player.name, hitscan.damage)
+                            }
+                        }
+
+                        changePlayerState(player, "attack1")
+                    }
+
+                    // status.innerHTML = `${player.cool}`
+
+                    // Chatting
+                    if (player.chatting !== '') {
+                        player.chattingTimeout -= deltatime
+                        if (player.chattingTimeout < 0) {
+                            player.chatting = ''
+                            player.chattingTimeout = gameOptions.chattingTimeout
+                        }
+                    }
+
+                    // Damage shown
+                    if (player.damageMsg !== 0) {
+                        player.damageMsgTimeout -= deltatime
+                        if (player.damageMsgTimeout < 0) {
+                            player.damageMsg = 0
+                            player.damageMsgTimeout = gameOptions.damageMsgTimeout
+                        }
+                    }
+                }
+            }
+
+            function changePlayerState(player, state) {
+                player.state = state
+                player.motion = player.state + player.direction
+                player.animationTick = 0
+            }
+
+            function updateProjectiles(deltatime) {
+
+                for (const projectile of projectiles) {
+                    projectile.lifetime -= deltatime
+                    projectile.x = ((projectile.x + projectile.vx * deltatime) + (xtiles * tilesize)) % (xtiles * tilesize)
+                    projectile.y = ((projectile.y + projectile.vy * deltatime) + (ytiles * tilesize)) % (ytiles * tilesize)
+
+                    const projectileAt = Math.floor(projectile.x / tilesize) + Math.floor(projectile.y / tilesize) * xtiles
+
+                    for (const target of getplayersAt(projectileAt)) {
+                        if (target !== projectile.owner && (gameOptions.teamKill || (players[target].team !== projectile.team))) {
+                            // console.log("hit")
+
+                            players[target].force = 0.18 * (tilesize / 32)
+                            players[target].forceangle = Math.atan2(projectile.vy, projectile.vx)
+                            players[target].forceduration = 150
+
+                            effects.push({lifetime: 500, x: players[target].x, y: players[target].y})
+
+                            damageTarget(target, projectile.owner, players[projectile.owner].damage * projectile.damage)
+
+                            projectile.nHits -= 1
+                        }
+                    }
+
+                }
+
+                projectiles = projectiles.filter(projectile => (projectile.lifetime > 0 && projectile.nHits > 0))
+            }
+
+            function damageTarget(target, dealer, amount) {
+                const oldhp = players[target].hp
+
+                const newhp = players[target].hp - amount
+                if (newhp <= branches[players[target].branch].maxhp) {
+                    players[target].hp = newhp
+                } else {
+                    players[target].hp = branches[players[target].branch].maxhp
+                }
+
+                players[target].damageMsg = players[target].hp - oldhp
+                players[target].damageMsgTimeout = gameOptions.damageMsgTimeout
+
+                if (newhp <= 0) {
+                    updateDeathCount(target, players[target].death + 1)
+
+                    if (gameOptions.isZombi) {
+                        players[target].hp = branches[players[target].branch].maxhp
+                    } else {
+                        alivePlayers.splice(alivePlayers.indexOf(target), 1)
+                        getplayersAt(Math.floor(players[target].x / tilesize) + Math.floor(players[target].y / tilesize) * xtiles).delete(target)
+                    }
+
+                    updateKillCount(dealer, players[dealer].kill + 1)
+                }
+            }
+
+            function updateEffects(deltatime) {
+                for (const effect of effects) {
+                    effect.lifetime -= deltatime
+                }
+                effects = effects.filter(effect => effect.lifetime > 0)
+            }
+
+            const players = {}
+            const alivePlayers = []
+
+            let projectiles = []
+            let effects = []
+
+            const playersAt = Array.from({length: xtiles * ytiles}, () => new Set())
+
+            function getplayersAt(idx) {
+                if (idx < xtiles * ytiles) {
+                    return playersAt[idx]
+                } else {
+                    console.log("accessing outside of playersAt Grid")
+                    return playersAt[0]
+                }
+            }
+
+            // class Player {
+            //     constructor({x, y, xto, yto, name, cool, dx = 0, dy = 0, theta = 0}) {
+            //         this.x = x
+            //         this.y = y
+            //         this.xto = xto
+            //         this.yto = yto
+            //         this.name = name
+            //         this.cool = cool
+            //         this.dx = dx
+            //         this.dy = dy
+            //         this.theta = theta
+            //     }
+            // }
+
+            function addPlayer(x, y, xto, yto, name, branch) {
+                players[name] = {
+                    name: name,
+                    x: x,
+                    y: y,
+                    xto: xto,
+                    yto: yto,
+                    dx: 0,
+                    dy: 0,
+                    theta: 0,
+                    animationTick: 0,
+                    branch: branch,
+                    sprite: branch,
+                    state: "idle",
+                    direction: "down",
+                    force: 0,
+                    forceangle: 0,
+                    forceduration: 0,
+                    kill: 0,
+                    death: 0,
+                    hp: branches[branch].maxhp,
+                    damage: branches[branch].basedamage,
+                    cool: branches[branch].cool,
+                    speed: branches[branch].speed,
+                    chatting: '',
+                    chattingTimeout: gameOptions.chattingTimeout,
+                    damageMsg: 0,
+                    damageMsgTimeout: gameOptions.damageMsgTimeout,
+                    team: 0,
+                }
+                players[name]["motion"] = players[name].state + players[name].direction
+                changeDestination(name, xto, yto) // Update direction dx dy
+
+                alivePlayers.push(name)
+
+                getplayersAt(Math.floor(x / tilesize) + Math.floor(y / tilesize) * xtiles).add(name)
+
+                addPlayerToTable(name, players[name].kill, players[name].death)
+            }
+
+
+
+            // players["my"] = {
+            //     x: 20,
+            //     y: 20,
+            //     xto: 200,
+            //     yto: 200,
+            //     name: "hello",
+            //     cool: skillcool
+            // }
+
+
+
+            // Main rendering loop
+            let animationId
+            // let lastRenderStamp = 0
+            let lastUpdateStamp = 0
+
+            // const gameLogicInterval = 1000 / fps
+            const tooLargeTimeGap = 1000
+
+
+            function animate(timeStamp) {
+                animationId = requestAnimationFrame(animate)
+
+                const deltaUpdateTime = timeStamp - lastUpdateStamp
+
+                // if (deltaUpdateTime > tooLargeTimeGap) {
+                //     return
+                // }
+
+                if (deltaUpdateTime > 1000 / gameOptions.fps) {
+                    if (deltaUpdateTime < tooLargeTimeGap) {
+                        updatePlayers(deltaUpdateTime)
+                        updateProjectiles(deltaUpdateTime)
+                        updateEffects(deltaUpdateTime)
+
+                        updateFPS(deltaUpdateTime);
+                    }
+                    lastUpdateStamp = timeStamp
+
+                    renderGame()
+
+                }
+            }
+
+
+            const fpsdiv = document.getElementById("fps")
+            let frameCount = 0
+            let frameTimeSum = 0
+
+            function updateFPS(deltaTime) {
+                frameCount++;
+                frameTimeSum += deltaTime;
+                if (frameCount >= 30 || frameTimeSum >= 1000) {
+                    let averageFrameTime = frameTimeSum / frameCount;
+                    let fps = 1000 / averageFrameTime;
+                    fpsDiv.textContent = `FPS ${fps.toFixed(1)}`;
+                    frameCount = 0;
+                    frameTimeSum = 0;
+                }
+            }
+
+            function renderGame() {
+                ctx.clearRect(0, 0, xtiles * tilesize, ytiles * tilesize)
+                ctx.imageSmoothingEnabled = false
+
+                ctx.fillStyle = 'rgba(0,0,0,0.1)'
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                // ctx.fillStyle = 'rgba(100,0,0,0.5)'
+                drawbackground()
+
+
+                if (gameOptions.seeGrid) {
+                    drawGrid()
+                }
+
+                const lefttopcanvasX = canvas.getBoundingClientRect().left
+                const lefttopcanvasY = canvas.getBoundingClientRect().top
+                const renderBufferRange = tilesize
+
+                drawPlayers(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+                drawProjectiles(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+                drawEffects(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+
+                drawNames(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+                if (gameOptions.seeChattings) {
+                    drawChattings(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+                }
+                if (gameOptions.seeDamages) {
+                    drawDamages(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+                }
+            }
+
+        function drawPlayers(lefttopcanvasX, lefttopcanvasY, renderBufferRange) {
+            for (const name of alivePlayers) {
+                const player = players[name]
+
+                if (gameOptions.seePath === true) {
+                    drawPath(Math.round(player.x), Math.round(player.y), Math.round(player.xto), Math.round(player.yto), player.team)
+                }
+
+                if (-renderBufferRange < player.x + lefttopcanvasX && player.x + lefttopcanvasX < window.innerWidth + renderBufferRange && -renderBufferRange < player.y + lefttopcanvasY && player.y + lefttopcanvasY < window.innerHeight + renderBufferRange) {
+                    draw(player.x, player.y, player.name)
+                }
+
+                // if (player.cool > skillcool - attShowDuration) {
+                //     drawAtk()
+                // }
+            }
+        }
+
+        function drawNames(lefttopcanvasX, lefttopcanvasY, renderBufferRange) {
+            for (const name of alivePlayers) {
+                const player = players[name]
+
+                if (-renderBufferRange < player.x + lefttopcanvasX && player.x + lefttopcanvasX < window.innerWidth + renderBufferRange && -renderBufferRange < player.y + lefttopcanvasY && player.y + lefttopcanvasY < window.innerHeight + renderBufferRange) {
+                    drawName(name, player.x, player.y)
+                }
+            }
+        }
+
+        function drawChattings(lefttopcanvasX, lefttopcanvasY, renderBufferRange) {
+            for (const name of alivePlayers) {
+                const player = players[name]
+                if (player.chatting !== '') {
+                    if (-renderBufferRange < player.x + lefttopcanvasX && player.x + lefttopcanvasX < window.innerWidth + renderBufferRange && -renderBufferRange < player.y + lefttopcanvasY && player.y + lefttopcanvasY < window.innerHeight + renderBufferRange) {
+                        drawChatting(player.chatting, player.x, player.y)
+                    }
+                }
+            }
+        }
+
+        function drawDamages(lefttopcanvasX, lefttopcanvasY, renderBufferRange) {
+            lowResCtx.clearRect(0, 0, xtiles * tilesize, ytiles * tilesize)
+            lowResCtx.imageSmoothingEnabled = false
+
+            lowResCtx.fillStyle = "blue"
+
+            for (const name of alivePlayers) {
+                const player = players[name]
+                if (player.damageMsg !== 0) {
+                    if (-renderBufferRange < player.x + lefttopcanvasX && player.x + lefttopcanvasX < window.innerWidth + renderBufferRange && -renderBufferRange < player.y + lefttopcanvasY && player.y + lefttopcanvasY < window.innerHeight + renderBufferRange) {
+                        if (player.damageMsg < 0) {
+                            lowResCtx.fillStyle = "white"
+                            msg = `${player.damageMsg}`
+                        } else {
+                            lowResCtx.fillStyle = "green"
+                            msg = `+${player.damageMsg}`
+                        }
+                        lowResCtx.font = Math.floor(tilesize / 2 + (tilesize / 2) * player.damageMsgTimeout / gameOptions.damageMsgTimeout) + "px Noto Sans KR"
+                        lowResCtx.fillText(msg, Math.floor(player.x), Math.floor(player.y - (tilesize / 6) + (tilesize / 2) * player.damageMsgTimeout / gameOptions.damageMsgTimeout))
+                    }
+                }
+            }
+
+            ctx.drawImage(lowResCanvas, 0, 0, xtiles * tilesize, ytiles * tilesize)
+        }
+
+        // function drawDamage(damage, x, y) {
+        //         lowResCtx.font = "16px Noto Sans KR"
+        //         lowResCtx.fillStyle = "red"
+        //         lowResCtx.fillText("1234Low하하2 길게 써 ", 100, 150)
+
+        //         ctx.drawImage(lowResCanvas, 0, 0, xtiles * tilesize, ytiles * tilesize)
+
+        //         ctx.font = "16px Noto Sans KR"
+        //         ctx.fillStyle = "white"
+        //         ctx.fillText("1234Low하하1 길게 써", 100, 150)
+        // }
+
+        function drawProjectiles() {
+            const lefttopcanvasX = canvas.getBoundingClientRect().left
+            const lefttopcanvasY = canvas.getBoundingClientRect().top
+            const renderBufferRange = tilesize
+
+            for (const projectile of projectiles) {
+                if (-renderBufferRange < projectile.x + lefttopcanvasX && projectile.x + lefttopcanvasX < window.innerWidth + renderBufferRange && -renderBufferRange < projectile.y + lefttopcanvasY && projectile.y + lefttopcanvasY < window.innerHeight + renderBufferRange) {
+                    drawProjectile(projectile.x, projectile.y, projectile.team)
+                }
+            }
+        }
+
+        function drawEffects() {
+            for (const effect of effects) {
+                drawEffect(effect.x, effect.y)
+            }
+        }
+
+        </script>
+
+        <script>
+            const branches = {
+                "swordman": {
+                    cool: 2000,
+                    maxhp: 100,
+                    basedamage: 10,
+                    speed: basespeed * 1.5,
+                    projectiles: [
+                        {arrowSpeed: 4 * basespeed, arrowAngle: 0, nHits: 1, damage: 1, lifetime: 400},
+                        {arrowSpeed: 4 * basespeed, arrowAngle: 3.14 / 4, nHits: 1, damage: 1, lifetime: 400},
+                        {arrowSpeed: 4 * basespeed, arrowAngle: -3.14 / 4, nHits: 1, damage: 1, lifetime: 400},
+                    ],
+                    hitscans: [
+                        {dx: 0, dy: 0, damage: -1,}, // <= Self heal
+                        //{dx: tilesize, dy: 0, damage: -1, nHits: 1},
+                    ],
+                }
+            }
+        </script>
+
+        <script>
+            const testimage = new Image()
+            testimage.src = "https://raw.githubusercontent.com/chimlang/realtime/main/public/image/Axeman.png"
+
+            const assets = {}
+            assets["swordman"] = new Image()
+            assets["swordman"].src = "https://chimlang.github.io/credit/updates/img/SwordsmanRed.png"
+
+            const sprite = {}
+            sprite["swordman"] = {
+                "idledown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}], holds:15},
+                "idleup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}], holds:15},
+                "idleright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}], holds:15},
+                "idleleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}], holds:15},
+                "walkdown": {crops:[{x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}], holds:5},
+                "walkup": {crops:[{x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}], holds:5},
+                "walkright": {crops:[{x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}], holds:5},
+                "walkleft": {crops:[{x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}], holds:5},
+                "attack1down": {crops:[{x:0, y:64, w:16, h:16}, {x:16, y:64, w:16, h:16}, {x:32, y:64, w:16, h:16}, {x:48, y:64, w:16, h:16}], holds:4},
+                "attack1up": {crops:[{x:0, y:80, w:16, h:16}, {x:16, y:80, w:16, h:16}, {x:32, y:80, w:16, h:16}, {x:48, y:80, w:16, h:16}], holds:4},
+                "attack1right": {crops:[{x:0, y:96, w:16, h:16}, {x:16, y:96, w:16, h:16}, {x:32, y:96, w:16, h:16}, {x:48, y:96, w:16, h:16}], holds:4},
+                "attack1left": {crops:[{x:0, y:112, w:16, h:16}, {x:16, y:112, w:16, h:16}, {x:32, y:112, w:16, h:16}, {x:48, y:112, w:16, h:16}], holds:4},
+            }
+
+            function draw(x, y, name) {
+                // ctx.drawImage(
+                //     testimage,
+                //     x - tilesize / 2,
+                //     y - tilesize / 2,
+                //     tilesize,
+                //     tilesize
+                // )
+
+                const motion = sprite[players[name].sprite][players[name].motion]
+                const nthmotion = Math.floor(players[name].animationTick / motion.holds)
+
+                // ctx.filter = "hue-rotate(180deg)"
+                // ctx.filter = "contrast(0%)"
+                const spritesize = Math.round(tilesize * 1)
+                ctx.drawImage(
+                    assets[players[name].sprite],
+                    motion.crops[nthmotion].x,
+                    motion.crops[nthmotion].y,
+                    motion.crops[nthmotion].w,
+                    motion.crops[nthmotion].h,
+                    Math.round(x - spritesize / 2),
+                    Math.round(y - spritesize / 2),
+                    spritesize,
+                    spritesize
+                )
+                ctx.filter = "none"
+
+                if (gameOptions.seeHitBox) {
+                    ctx.fillStyle = teamColorCode[players[name].team].replace(', 1)', ', 0.2)')
+                    ctx.fillRect(Math.floor(x / tilesize) * tilesize, Math.floor(y / tilesize) * tilesize, tilesize, tilesize)
+                }
+            }
+
+            let projectileSize = 4
+            function drawProjectile(x, y, team) {
+                ctx.fillStyle = teamColorCode[team]
+                ctx.fillRect(Math.round(x - projectileSize / 2), Math.round(y - projectileSize / 2), projectileSize, projectileSize)
+
+                if (gameOptions.seeHitBox) {
+                    ctx.fillStyle = teamColorCode[team].replace(', 1)', ', 0.2)')
+                    ctx.fillRect(Math.floor(x / tilesize) * tilesize, Math.floor(y / tilesize) * tilesize, tilesize, tilesize)
+                }
+            }
+
+            function drawEffect(x, y) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
+                ctx.fillRect(Math.floor(x / tilesize) * tilesize, Math.floor(y / tilesize) * tilesize, tilesize, tilesize)
+            }
+
+            function drawName(name, x, y) {
+                ctx.font = "16px Noto Sans KR"
+                ctx.fillStyle = teamColorCode[players[name].team]
+                ctx.fillText(name, Math.round(x - tilesize / 2), Math.round(y - tilesize / 2))
+            }
+
+            function drawChatting(msg, x, y) {
+                ctx.font = "10px Noto Sans KR"
+                ctx.fillStyle = "rgba(255, 255, 255, 1)"
+                ctx.fillText(msg, Math.round(x - tilesize / 2), Math.round(y - tilesize / 2) + 16)
+            }
+
+            function drawPath(x, y, xto, yto, team) {
+                ctx.strokeStyle = teamColorCode[team].replace(', 1)', ', 0.4)')
+                ctx.lineWidth = 1
+
+                ctx.beginPath()
+                ctx.moveTo(x, y)
+                ctx.lineTo(xto, yto)
+                ctx.stroke()
+            }
+
+            // function drawAtk() {
+            //     ctx.fillStyle = 'rgba(255, 0, 0, 0.1)'
+            //     ctx.fillRect(30, 30, tilesize, tilesize)
+            // }
+
+            const testbg = new Image()
+            testbg.src = "https://img.itch.zone/aW1hZ2UvNzAzOTA4LzQ4NjEzOTYucG5n/original/WtbGHg.png"
+
+            function drawbackground() {
+                if (gameOptions.seeBackground) {
+                    ctx.drawImage(
+                        testbg,
+                        0,
+                        0,
+                        800,
+                        800
+                    )
+                } else {
+                    ctx.fillStyle = 'white'
+                    ctx.fillRect(0, 0, canvas.width, canvas.height)
+                }
+            }
+
+            function drawGrid() {
+                const w = canvas.width
+                const h = canvas.height
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)'
+                ctx.lineWidth = 1
+
+                for (let i = 0; i <= w; i += tilesize) {
+                    ctx.beginPath()
+                    ctx.moveTo(i, 0)
+                    ctx.lineTo(i, h)
+                    ctx.stroke()
+                }
+                for (let i = 0; i <= h; i += tilesize) {
+                    ctx.beginPath()
+                    ctx.moveTo(0, i)
+                    ctx.lineTo(w, i)
+                    ctx.stroke()
+                }
+            }
+        </script>
+
+        <!-- Shoot -->
+        <script>
+            const oArray = Array.from({ length: Math.floor(xtiles / 2)}, (_, i) => i * tilesize + Math.floor(tilesize / 2))
+            const xArray = Array.from({ length: Math.floor(xtiles / 2)}, (_, i) => i * tilesize + Math.floor(tilesize / 2) + Math.floor(xtiles * tilesize / 2))
+
+            function shoot(ox) {
+                if (ox === "o") {
+                    for (const x of oArray) {
+                        projectiles.push({x:x, y:0, lifetime: 3000, nHits: 1, vx: 0, vy: 0.4, damage: 200, owner: localUserName, team: players[localUserName].team})
+                    }
+                } else if (ox === "x") {
+                    for (const x of xArray) {
+                        projectiles.push({x:x, y:0, lifetime: 3000, nHits: 1, vx: 0, vy: 0.4, damage: 200, owner: localUserName, team: players[localUserName].team})
+                    }
+                }
+            }
+        </script>
+
+        <!-- Main character move by mouse click -->
+        <script>
+            canvas.addEventListener("click", (event) => {
+                const rect = canvas.getBoundingClientRect()
+                const xto = event.clientX - rect.left
+                const yto = event.clientY - rect.top
+
+                changeDestination(localUserName, xto, yto)
+            })
+
+            function changeDestination(name, xto, yto) {
+                players[name].xto = xto
+                players[name].yto = yto
+
+                const angle = Math.atan2(yto - players[name].y, xto - players[name].x)
+                players[name].dx = Math.cos(angle)
+                players[name].dy = Math.sin(angle)
+                players[name].theta = angle
+
+                if (-3.14 * 3 / 4 < angle && angle <= -3.14 * 1 / 4) {
+                    players[name].direction = "up"
+                } else if ((-3.14 * 1 / 4 < angle && angle <= 3.14 * 1 / 4)) {
+                    players[name].direction = "right"
+                } else if ((3.14 * 1 / 4 < angle && angle <= 3.14 * 3 / 4)) {
+                    players[name].direction = "down"
+                } else {
+                    players[name].direction = "left"
+                }
+                players[name].motion = players[name].state + players[name].direction
+            }
+        </script>
+
+
+
+        <!-- Tables on the screen -->
+        <script>
+            function addPlayerToTable(name, kill, death) {
+                let player = {name, kill, death};
+                insertPlayerInOrder(player, 'playerListByName', (a, b) => a.name.localeCompare(b.name));
+                insertPlayerInOrder(player, 'playerListByKill', (a, b) => b.kill - a.kill);
+            }
+
+            function insertPlayerInOrder(player, tableId, compareFunction) {
+                let table = document.getElementById(tableId);
+                let rows = Array.from(table.rows).slice(1);  // Exclude the header row
+                let index = binarySearch(rows, player, compareFunction);
+                if (index === -1) {
+                    index = rows.length;  // Insert at the end
+                }
+                let row = table.insertRow(index + 1);  // Add 1 to account for the header row
+                row.insertCell(0).innerHTML = player.name;
+                row.insertCell(1).innerHTML = player.kill;
+                row.insertCell(2).innerHTML = player.death;
+            }
+
+            function binarySearch(arr, x, compareFunction) {
+                let start = 0, end = arr.length - 1;
+
+                // Iterate while start not meets end
+                while (start <= end) {
+
+                    // Find the mid index
+                    let mid = Math.floor((start + end) / 2);
+
+                    // If element is present at mid, return True
+                    if (compareFunction(getPlayerFromRow(arr[mid]), x) === 0) return mid;
+
+                    // Else look in left or right half accordingly
+                    else if (compareFunction(getPlayerFromRow(arr[mid]), x) < 0) start = mid + 1;
+                    else end = mid - 1;
+                }
+
+                // if the element should be inserted at the end of the array
+                if (start > end) return end + 1;
+
+                return start;
+            }
+
+            function getPlayerFromRow(row) {
+                return {
+                    name: row.cells[0].innerHTML,
+                    kill: parseInt(row.cells[1].innerHTML),
+                    death: parseInt(row.cells[2].innerHTML)
+                };
+            }
+
+            function updateKillCount(name, newKill) {
+                let player = players[name];
+                if (!player) {
+                    return;
+                }
+                player.kill = newKill;
+                updatePlayerInTable(player, 'playerListByName', (a, b) => a.name.localeCompare(b.name));
+                updatePlayerInTable(player, 'playerListByKill', (a, b) => b.kill - a.kill);
+            }
+
+            function updateDeathCount(name, newDeath) {
+                let player = players[name];
+                if (!player) {
+                    return;
+                }
+                player.death = newDeath;
+                updatePlayerInTable(player, 'playerListByName', (a, b) => a.name.localeCompare(b.name));
+                updatePlayerInTable(player, 'playerListByKill', (a, b) => b.kill - a.kill);
+            }
+
+            function updatePlayerInTable(player, tableId, compareFunction) {
+                let table = document.getElementById(tableId);
+                let rows = Array.from(table.rows).slice(1);  // Exclude the header row
+                let oldIndex = rows.findIndex(row => row.cells[0].innerHTML === player.name);
+                if (oldIndex === -1) {
+                    return;
+                }
+                table.deleteRow(oldIndex + 1);  // Add 1 to account for the header row
+                let newIndex = binarySearch(rows, player, compareFunction);
+                if (newIndex === -1) {
+                    newIndex = rows.length;  // Insert at the end
+                }
+                let row = table.insertRow(newIndex + 1);  // Add 1 to account for the header row
+                row.insertCell(0).innerHTML = player.name;
+                row.insertCell(1).innerHTML = player.kill;
+                row.insertCell(2).innerHTML = player.death;
+                if (player.death > 0) {
+                    row.classList.add('dead')
+                }
+            }
+        </script>
+
+        <script>
+
+            document.getElementById('toggleButton').addEventListener('change', toggleDeadPlayers);
+
+            function toggleDeadPlayers() {
+                let style = document.getElementById('toggleStyle')
+                if (!style) {
+                    style = document.createElement('style')
+                    style.id = 'toggleStyle'
+                    document.head.appendChild(style)
+                }
+                if (style.innerHTML) {
+                    style.innerHTML = ''
+                } else {
+                    style.innerHTML = '.dead { display: none; }'
+                }
+            }
+        </script>
+
+        <script>
+            addPlayer(20, 20, 200, 200, localUserName, "swordman")
+            addPlayer(40, 40, 400, 100, "유비관우", "swordman")
+        </script>
+    </body>
+</html>
