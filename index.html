@@ -263,8 +263,8 @@
                     <tr>
                         <th style="width: 120px;">Name</th>
                         <th style="width: 30px;">Kill</th>
-                        <th style="width: 30px;">Death</th>
-                        <th>Chatting</th>
+                        <th style="width: 30px;">D</th>
+                        <th>Chat</th>
                     </tr>
                 </table>
 
@@ -272,8 +272,8 @@
                     <tr>
                         <th style="width: 120px;">Name</th>
                         <th style="width: 30px;">Kill</th>
-                        <th style="width: 30px;">Death</th>
-                        <th>유언</th>
+                        <th style="width: 30px;">D</th>
+                        <th>Chat</th>
                     </tr>
                 </table>
             </div>
@@ -816,8 +816,8 @@
                             branch = "assasin"
                         }
 
-                        addPlayer(x, y, players[localUserName].x, players[localUserName].y, name, branch, team)
-                        players[name].chatting = msg
+                        addPlayer(x, y, players[localUserName].x, players[localUserName].y, name, branch, team, msg)
+                        // players[name].chatting = msg
                         players[name].chattingTimeout = gameOptions.chattingTimeout
 
                         if (gameOptions.mode === "survivors") {
@@ -995,6 +995,8 @@
                     getplayersAt(oldAt).delete(player.name)
                     getplayersAt(newAt).add(player.name)
                     changeDestination(player.name, oldx, oldy)
+
+                    updateKillCount(mob, players[mob].kill + 1)
                 }
 
 
@@ -1080,6 +1082,7 @@
                         projectile.nHits = survivorArrow["nHits"]
                     }
                 }
+                upgradeSelectDiv.style.display = "none"
             }
 
             function addArrowDamage() {
@@ -1089,6 +1092,7 @@
                         projectile.damage = survivorArrow["damage"]
                     }
                 }
+                upgradeSelectDiv.style.display = "none"
             }
 
             function addSword() {
@@ -1114,6 +1118,7 @@
                         projectile.damage = survivorSword["damage"]
                     }
                 }
+                upgradeSelectDiv.style.display = "none"
             }
 
         </script>
@@ -1412,7 +1417,7 @@
             //     }
             // }
 
-            function addPlayer(x, y, xto, yto, name, branch, team) {
+            function addPlayer(x, y, xto, yto, name, branch, team, msg) {
                 players[name] = {
                     name: name,
                     x: x,
@@ -1436,7 +1441,7 @@
                     damage: branches[branch].basedamage,
                     cool: branches[branch].cool,
                     speed: branches[branch].speed,
-                    chatting: '',
+                    chatting: msg,
                     chattingTimeout: gameOptions.chattingTimeout,
                     damageMsg: 0,
                     damageMsgTimeout: gameOptions.damageMsgTimeout,
@@ -1569,7 +1574,8 @@
             ctx.fillRect(player.x - tilesize / 2, player.y - tilesize, player.hp / branches[player.branch].maxhp * tilesize, tilesize / 4)
         }
 
-        const maxExp = 100
+        let maxExp = 100
+        const maxExpIncrement = 10
         const expPerKill = 40
         function drawExpBar() {
             const player = players[localUserName]
@@ -1877,7 +1883,7 @@
 
                 if (gameOptions.sound) {
                     if (musicVolumeSlider.value == 0 && effectVolumeSlider.value == 0) {
-                        musicVolumeSlider.value = 0.3
+                        musicVolumeSlider.value = 0.2
                         effectVolumeSlider.value = 0.3
                     }
                     changeMusicSoundVolume(musicVolumeSlider.value)
@@ -2281,6 +2287,10 @@
                 row.insertCell(0).innerHTML = player.name;
                 row.insertCell(1).innerHTML = player.kill;
                 row.insertCell(2).innerHTML = player.death;
+                if (players[player.name].chatting !== "") {
+                    row.insertCell(3).innerHTML = players[player.name].chatting;
+                    console.log(players[player.name].chatting)
+                }
             }
 
             function binarySearch(arr, x, compareFunction) {
@@ -2310,7 +2320,8 @@
                 return {
                     name: row.cells[0].innerHTML,
                     kill: parseInt(row.cells[1].innerHTML),
-                    death: parseInt(row.cells[2].innerHTML)
+                    death: parseInt(row.cells[2].innerHTML),
+                    // chatting: row.cells[3].innerHTML
                 };
             }
 
@@ -2335,6 +2346,9 @@
                 if (name === localUserName) {
                     playSound("levelup")
                     promoteLocalUser()
+                    if (gameOptions.mode === "survivors") {
+                        maxExp += maxExpIncrement
+                    }
                 }
                 player.lv += 1
             }
@@ -2369,6 +2383,9 @@
                 row.insertCell(0).innerHTML = player.name;
                 row.insertCell(1).innerHTML = player.kill;
                 row.insertCell(2).innerHTML = player.death;
+                if (players[player.name].chatting !== "") {
+                    row.insertCell(3).innerHTML = players[player.name].chatting;
+                }
                 if (player.death > 0) {
                     row.classList.add('dead')
                 }
@@ -2420,7 +2437,7 @@
         <script>
             // addPlayer(40, 40, 400, 100, "유비관우", "slime")
 
-            addPlayer(20, 20, 200, 200, localUserName, "survivor", 1)
+            addPlayer(20, 20, 200, 200, localUserName, "survivor", 1, "Hi!")
             players[localUserName].sprite = "swordman"
 
             // addPlayer(40, 40, 200, 400, "하항길다란이름아이디를ㄹ테스트해보자", "dragon")
