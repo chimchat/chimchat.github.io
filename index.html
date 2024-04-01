@@ -107,6 +107,8 @@
                 left: 0;
                 display: flex;
                 overflow: hidden;
+                align-items: center;
+                justify-content: center;
             }
 
             #rulerVertical {
@@ -116,10 +118,22 @@
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
+                align-items: center;
+                justify-content: center;
+            }
+
+            #upgradeSelect {
+                position: absolute;
+                top: 30px;
+                left: 30px;
+                display: flex;
+                flex-wrap: wrap;
             }
 
             .scaleNumber {
-                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 overflow: hidden;
                 white-space: nowrap;
                 text-overflow: ellipsis;
@@ -135,107 +149,338 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                width: 200px;
+
+                border: 3px solid #d3d3d3;
+                padding: 10px;
+                background-color: #f1f1f1;
+                margin-top: 40px;
+            }
+
+            #modeMenu {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+                border: 3px solid #d3d3d3;
+                padding: 10px;
+                background-color: #f1f1f1;
+            }
+
+            #settings {
+                width: 280px;
+                border: 1px solid #d3d3d3;
+                border-radius: 20px;
+                padding: 10px;
+                background-color: rgba(255, 255, 255, 0.3);
+                backdrop-filter: blur(7px);
+                margin-left: 15px;
+            }
+
+            #playerList {
+                width: 280px;
+                overflow: auto;
+                border-left: 3px solid #d3d3d3;
+                background-color: #f1f1f1;
+            }
+
+            .shortInput {
+                width: 70px;
+            }
+
+            #mainScreen {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            td {
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            table {
+                table-layout: fixed;
+                width: 100%;
+            }
+
+            #oxbuttons {
+                position: absolute;
+                top: 20px;
             }
         </style>
     </head>
     <body>
-        hello world!
-        <!-- <div id="status"></div> -->
-        <div id="gameScreenParent">
-            <div id="ruler"></div>
-            <div id="rulerVertical"></div>
-            <canvas></canvas>
+        Hi!
+
+        <!-- Main screen -->
+        <div id="mainScreen">
+            <!-- Game screen -->
+            <div id="gameScreenParent">
+                <div id="ruler"></div>
+                <div id="rulerVertical"></div>
+                <div id="oxbuttons" style="display: none;">
+                    <button id="obutton" onclick="shoot('x')">O</button>
+                    <button id="xbutton" onclick="shoot('o')">X</button>
+                </div>
+                <div id="upgradeSelect" style="display: none">
+                    <button onclick="speedUp()">이동속도 10% 증가</button>
+                    <button onclick="maxHPup()">maxHP 20% 증가</button>
+                    <button onclick="recoverHP()">HP회복</button>
+                    <button onclick="coolDownDecrease()">공격쿨다운 5% 감소</button>
+
+                    <button onclick="addArrow()">활 공격 추가</button>
+                    <button onclick="addArrowSpeed()">화살 속도 20% 증가</button>
+                    <!-- <button onclick="addArrowNHits()">화살 관통력 증가</button> -->
+                    <button onclick="addArrowDamage()">화살 데미지 20% 증가</button>
+
+                    <button onclick="addSword()">근접 공격 추가</button>
+                    <button onclick="addSwordSpeed()">근접 공격 리치 20% 증가</button>
+                    <button onclick="addSwordDamage()">근접 데미지 30% 증가</button>
+                </div>
+                <canvas></canvas>
+            </div>
+
+            <!-- Player list -->
+            <div id="playerList">
+                <label style="margin-right: 20px">
+                    이름순
+                    <label class="switch">
+                        <input type="checkbox" id="toggleButtonSort">
+                        <span class="slider round"></span>
+                    </label>
+                    점수순
+                </label>
+
+                <label>
+                    👻
+                    <label class="switch">
+                        <input type="checkbox" id="toggleButton">
+                        <span class="slider round"></span>
+                    </label>
+                </label>
+
+                <table id="playerListByName">
+                    <tr>
+                        <th style="width: 120px;">Name</th>
+                        <th style="width: 30px;">Kill</th>
+                        <th style="width: 30px;">Death</th>
+                        <th>Chatting</th>
+                    </tr>
+                </table>
+
+                <table id="playerListByKill" style="display: none;">
+                    <tr>
+                        <th style="width: 120px;">Name</th>
+                        <th style="width: 30px;">Kill</th>
+                        <th style="width: 30px;">Death</th>
+                        <th>유언</th>
+                    </tr>
+                </table>
+            </div>
         </div>
 
 
-        <div id="fpsDiv" style="position: fixed; top: 0; left: 0"></div>
+        <!-- Setting Screen -->
+        <div id="settingButton" style="position: fixed; top: 0; left: 0">
+            <div style="display: flex;">
+                <button onclick="toggleDivVisibility('settings')">⚙️Setting</button>
+                <button id="soundToggleButton" onclick="toggleSound()">🔇<span style="color: red">Muted</span></button>
+                <div id="fpsDiv"></div>
+                <div style="margin-left: 20px;">
+                    채팅: <span style="color: blue;">!이동 x좌표 y좌표</span> (좌표 미입력시 주인공 위치로 이동)
+                </div>
+            </div>
 
-        <!-- Settings -->
-        <div id="settings">
-            <label>격자보기</label>
-            <input type="checkbox" id="seeGrid" checked onclick="updateCheckbox(this)">
-            <br>
 
-            <label>경로보기</label>
-            <input type="checkbox" id="seePath" checked onclick="updateCheckbox(this)">
-            <br>
+            <!-- Main menu -->
+            <div id="mainMenu">
+                <select id="modeSelected" onchange="changeMode()">
+                    <option value="survivors">Survivors Mode</option>
+                    <option value="chatVsChat">Chat vs Chat Mode</option>
+                    <option value="ox">OX퀴즈 Mode</option>
+                </select>
+                <ul id="modeDescription" style="width:300px;">
+                </ul>
+                <div id="mapSizeChange" style="display: none;">
+                    <label>가로 타일 수</label>
+                    <input type="number" id="xtiles" value="50" class="shortInput" checked onchange="updateNumberOption(this)">
+                    <br>
 
-            <label>히트박스보기</label>
-            <input type="checkbox" id="seeHitBox" checked onclick="updateCheckbox(this)">
-            <br>
+                    <label>세로 타일 수</label>
+                    <input type="number" id="ytiles" value="50" class="shortInput" checked onchange="updateNumberOption(this)">
+                    <br>
 
-            <label>배경보기</label>
-            <input type="checkbox" id="seeBackground" checked onclick="updateCheckbox(this)">
-            <br>
+                    <label>타일 크기 (px)</label>
+                    <input type="number" id="tilesize" value="16" class="shortInput" checked onchange="updateNumberOption(this)">
+                    <br>
 
-            <label>대기시 주인공 추격</label>
-            <input type="checkbox" id="goToMainCharacter" onclick="updateCheckbox(this)">
-            <br>
+                    <button onclick="changeMapSize()" style="color: red; margin-left:65px;">적용</button>
+                </div>
+                <button onclick="toggleDivVisibility('mapSizeChange')">맵 크기 변경</button>
+                <button onclick="goToModeMenu()">Start</button>
+                <button>Credit</button>
+            </div>
 
-            <label>모두 불사</label>
-            <input type="checkbox" id="isZombi" onclick="updateCheckbox(this)">
-            <br>
 
-            <label>명령어 채팅(!로 시작)만 인식</label>
-            <input type="checkbox" id="commandsOnly" onclick="updateCheckbox(this)">
-            <br>
+            <!-- Mode menus -->
+            <div id="modeMenu" style="display: none">
+                <div id="modeMenuTeams">
+                    <div><span style="color: green">Team1</span>: My character</div>
+                    <div id="teamMenu"></div>
+                </div>
+                <button>Settings</button>
+                <button id="startButton" style="color: red; display: none;" onclick="startGame()">Start</button>
+            </div>
 
-            <label>말풍선 보기</label>
-            <input type="checkbox" id="seeChattings" onclick="updateCheckbox(this)">
-            <br>
 
-            <label>인원 그만 받기</label>
-            <input type="checkbox" id="noMoreNewPlayers" onclick="updateCheckbox(this)">
-            <br>
+            <!-- Detail settings -->
+            <div id="settings" style="display: none">
+                <label>Max 인원</label>
+                <input type="number" id="maxPlayers" value="5000" class="shortInput" checked onchange="updateNumberOption(this)">
+                <br>
 
-            <label>Max 인원</label>
-            <input type="number" id="maxPlayers" value="5000" checked onchange="updateNumberOption(this)">
-            <br>
+                <label>Max 생존 인원</label>
+                <input type="number" id="maxAlivePlayers" value="500" class="shortInput" checked onchange="updateNumberOption(this)">
+                <br>
 
-            <label>Max 생존 인원</label>
-            <input type="number" id="maxAlivePlayers" value="500" checked onchange="updateNumberOption(this)">
-            <br>
+                <label>명령어 채팅(!로 시작)만 인식</label>
+                <input type="checkbox" id="commandsOnly" onclick="updateCheckbox(this)">
+                <br>
 
-            <label>격자 당 최대인원</label>
-            <input type="number" id="maxPlayersPerTile" value="1" checked onchange="updateNumberOption(this)">
-            <br>
+                <label>초당 프레임 제한</label>
+                <input type="number" id="fps" value="60" class="shortInput" checked onchange="updateNumberOption(this)">
+                <br>
 
-            <label>초당 프레임 제한</label>
-            <input type="number" id="fps" value="60" checked onchange="updateNumberOption(this)">
-            <br>
+                <p>--------------</p>
 
-            <label>말풍선 보이는 시간</label>
-            <input type="number" id="chattingTimeout" value="10000" checked onchange="updateNumberOption(this)">
-            <br>
+                <label>인원 그만 받기</label>
+                <input type="checkbox" id="noMoreNewPlayers" onclick="updateCheckbox(this)">
+                <br>
 
-            <label>데미지 보기 (최대 하나씩)</label>
-            <input type="checkbox" id="seeDamages" checked onclick="updateCheckbox(this)">
-            <br>
+                <label>대기시 주인공 추격</label>
+                <input type="checkbox" id="goToMainCharacter" onclick="updateCheckbox(this)">
+                <br>
 
-            <label>데미지 보이는 시간</label>
-            <input type="number" id="damageMsgTimeout" value="1000" checked onchange="updateNumberOption(this)">
-            <br>
+                <label>산개</label>
+                <button onclick="spreadOut()">산개</button>
+                <br>
 
-            <label>팀킬</label>
-            <input type="checkbox" id="teamKill" onclick="updateCheckbox(this)">
-            <br>
+                <label>모두 불사</label>
+                <input type="checkbox" id="isZombi" onclick="updateCheckbox(this)">
+                <br>
 
+                <label>타일 당 최대인원</label>
+                <input type="number" id="maxPlayersPerTile" value="3" class="shortInput" checked onchange="updateNumberOption(this)">
+                <br>
+
+                <label>팀킬</label>
+                <input type="checkbox" id="teamKill" onclick="updateCheckbox(this)">
+                <br>
+
+                <p>--------------</p>
+
+                <label>격자보기</label>
+                <input type="checkbox" id="seeGrid" checked onclick="updateCheckbox(this)">
+                <br>
+
+                <label>경로보기</label>
+                <input type="checkbox" id="seePath" checked onclick="updateCheckbox(this)">
+                <br>
+
+                <label>히트박스보기</label>
+                <input type="checkbox" id="seeHitBox" checked onclick="updateCheckbox(this)">
+                <br>
+
+                <label>배경보기</label>
+                <input type="checkbox" id="seeBackground" checked onclick="updateCheckbox(this)">
+                <br>
+
+                <label>말풍선 보기</label>
+                <input type="checkbox" id="seeChattings" checked onclick="updateCheckbox(this)">
+                <br>
+
+                <label>말풍선 보이는 시간 (ms)</label>
+                <input type="number" id="chattingTimeout" value="10000" class="shortInput" checked onchange="updateNumberOption(this)">
+                <br>
+
+                <label>데미지 보기 (최대 하나씩)</label>
+                <input type="checkbox" id="seeDamages" checked onclick="updateCheckbox(this)">
+                <br>
+
+                <label>데미지 보이는 시간 (ms)</label>
+                <input type="number" id="damageMsgTimeout" value="1000" class="shortInput" checked onchange="updateNumberOption(this)">
+                <br>
+
+                <p>--------------</p>
+
+                <label>배경음 크기</label>
+                <input type="range" min="0" max="1" id="musicVolumeSlider" value="0.0" step="0.05" onchange="changeMusicSoundVolume(this.value)">
+                <br>
+
+                <label>효과음 크기</label>
+                <input type="range" min="0" max="1" id="effectVolumeSlider" value="0.0" step="0.05" onchange="changeEffectSoundVolume(this.value)">
+                <br>
+            </div>
         </div>
 
-        <!-- Main menu -->
-        <div id="mainMenu">
-            <select id="modeSelected">
-                <option value="survivors">Survivors Mode</option>
-                <option value="chatVsChat">Chat vs Chat Mode</option>
-                <option value="ox">OX퀴즈 Mode</option>
-            </select>
-            <button onclick="goToModeMenu()">Start</button>
-            <button>Credit</button>
-        </div>
+
+        <script>
+            function changeMapSize() {
+                gameOptions["xtiles"] = document.getElementById("xtiles").value
+                gameOptions["ytiles"] = document.getElementById("ytiles").value
+                gameOptions["tilesize"] = document.getElementById("tilesize").value
+
+                const params = "?xtiles=" + gameOptions["xtiles"] + "&ytiles=" + gameOptions["ytiles"] + "&tilesize=" + gameOptions["tilesize"]
+
+                window.location = window.location.origin + window.location.pathname + params
+            }
+        </script>
+
+
+        <script>
+            function toggleDivVisibility(id) {
+                const div = document.getElementById(id);
+                if (div.style.display === "none") {
+                    div.style.display = "block";
+                } else {
+                    div.style.display = "none";
+                }
+            }
+        </script>
+
+        <script>
+            function spreadOut() {
+                for (let name in players) {
+                    changeDestination(name, Math.floor(xtiles * tilesize * Math.random()), Math.floor(ytiles * tilesize * Math.random()))
+                }
+            }
+        </script>
 
         <script>
             const modeSelected = document.getElementById("modeSelected")
+
+            function changeMode() {
+                if (modeSelected.value === "survivors") {
+                    document.getElementById("modeDescription").innerHTML = `
+                    <li>주인공은 마우스 클릭으로 이동.</li>
+                    <li>채팅은 !이동 x좌표 y좌표 로 이동.</li>
+                    <li>주인공에게 충돌하면 데미지를 주고 진화함.</li>
+                    <li>슬라임 > 메가슬라임 > 돼지 > 오크 > 데몬 > 드래곤으로 진화.</li>`
+                } else if (modeSelected.value === "chatVsChat") {
+                    document.getElementById("modeDescription").innerHTML = `
+                    <li>주인공은 마우스 클릭으로 이동.</li>
+                    <li>채팅은 !이동 x좌표 y좌표 로 이동.</li>
+                    <li>2개의 다른 방송 채팅 대결.</li>
+                    <li>검사, 궁수 랜덤으로 정해짐.</li>`
+                } else if (modeSelected.value === "ox") {
+                    document.getElementById("modeDescription").innerHTML = `
+                    <li>화살을 발사하는 O X 버튼이 추가됨.</li>
+                    <li>채팅은 !이동 x좌표 y좌표 색깔</li>
+                    <li>색상은 빨주노초파남보.</li>`
+                }
+            }
+            changeMode()
+
             function goToModeMenu() {
                 gameOptions["mode"] = modeSelected.value
 
@@ -249,28 +494,15 @@
                     case "chatVsChat":
                         addTeamMenu(1)
                         addTeamMenu(2)
+                        gameOptions.numberOfTeams = 2
                         break
                     case "ox":
                         addTeamMenu(2)
+                        document.getElementById("oxbuttons").style.display = "flex"
                         break
                 }
             }
         </script>
-
-        <!-- Mode menus -->
-        <div id="modeMenu" style="display: none">
-            <div id="modeMenuTeams">
-                <div><span style="color: green">Team1</span>: My character</div>
-                <div id="teamMenu"></div>
-            </div>
-            <button>Settings</button>
-            <button>Start</button>
-        </div>
-
-        <!-- Survivors Mode -->
-        <div>
-
-        </div>
 
         <script>
             const teamMenu = document.getElementById("teamMenu")
@@ -298,7 +530,7 @@
                 innerHtml += `
                 <div>
                     <label for="channelId${team}">Channel ID: (치지직 방송 주소의 빨간 부분: https://chzzk.naver.com/<span style="color: red">bb382c2c0cc9fa7c86ab3b037fb5799c</span> )</label><br>
-                    <input type="text" id="channelId${team}" name="channelId${team}" placeholder="bb382c2c0cc9fa7c86ab3b037fb5799c"><br>
+                    <input type="text" id="channelId${team}" name="channelId${team}" placeholder="bb382c2c0cc9fa7c86ab3b037fb5799c" value="bb382c2c0cc9fa7c86ab3b037fb5799c"><br>
                     <button onclick="goToGetChatChannelId(${team})">goToGetChatChannelId</button><br>
 
                     <div id="toGetChatChannelId${team}"></div>
@@ -354,36 +586,14 @@
         </div> -->
 
         <!-- List of players -->
-        <label>
-            Hide Dead Players
-            <label class="switch">
-                <input type="checkbox" id="toggleButton">
-                <span class="slider round"></span>
-            </label>
-        </label>
 
-        <table id="playerListByName">
-            <tr>
-                <th>Name</th>
-                <th>Kill</th>
-                <th>Death</th>
-                <th>Chatting</th>
-            </tr>
-        </table>
 
-        <table id="playerListByKill">
-            <tr>
-                <th>Name</th>
-                <th>Kill</th>
-                <th>Death</th>
-                <th>Last words</th>
-            </tr>
-        </table>
+
 
 
         <!-- Settings -->
         <script>
-            const commandMark = '!'
+            const commandMark = "!"
 
             // When chaning this, you should also change it in settings checkboxes or inputboxes
             let gameOptions = {
@@ -398,12 +608,16 @@
                 noMoreNewPlayers: false,
                 maxPlayers: 5000,
                 maxAlivePlayers: 500,
-                maxPlayersPerTile: 1,
+                numberOfTeams: 1,
+                maxPlayersPerTile: 3,
                 fps: 60,
                 chattingTimeout: 10000,
                 seeDamages: true,
                 damageMsgTimeout: 1000,
                 teamKill: false,
+                mode: "",
+                sound: false,
+                isGameStart: false,
             };
 
             function updateCheckbox(checkbox) {
@@ -422,8 +636,12 @@
             // let serviceName = "치지직"
 
             function goToGetChatChannelId(team) {
-                chatChannel[team].channelId = document.getElementById(`channelId${team}`).value;
+                chatChannel[team].channelId = document.getElementById(`channelId${team}`).value.trim();
                 const channelId = chatChannel[team].channelId
+                if (channelId === "") {
+                    alert("copy and paste the channelId from the url")
+                    return
+                }
                 const toGetChatChannelId = document.getElementById(`toGetChatChannelId${team}`);
                 const link = document.createElement("a");
                 link.textContent = "chatChannelId";
@@ -434,8 +652,12 @@
             }
 
             function goToGetAccessToken(team) {
-                chatChannel[team].chatChannelId = document.getElementById(`chatChannelId${team}`).value;
+                chatChannel[team].chatChannelId = document.getElementById(`chatChannelId${team}`).value.trim();
                 const chatChannelId = chatChannel[team].chatChannelId
+                if (chatChannelId === "") {
+                    alert("copy and paste the chatChannelId from the link")
+                    return
+                }
                 const toGetAccessToken = document.getElementById(`toGetAccessToken${team}`);
                 const link = document.createElement("a");
                 link.textContent = "accessToken";
@@ -445,11 +667,17 @@
                 document.getElementById(`accessTokenDiv${team}`).style.display = "block";
             }
 
+            const startButton = document.getElementById("startButton")
+
             function connect(team, platform) {
-                chatChannel[team].accessToken = document.getElementById(`accessToken${team}`).value;
+                chatChannel[team].accessToken = document.getElementById(`accessToken${team}`).value.trim();
                 const accessToken = chatChannel[team].accessToken
+                if (accessToken === "") {
+                    alert("copy and paste the accessToken from the link")
+                    return
+                }
                 // Add your connection logic here
-                console.log("Connecting with access token: " + accessToken);
+                // console.log("Connecting with access token: " + accessToken);
                 const serverId = Math.abs(
                     chatChannel[team].chatChannelId.split("")
                         .map(c => c.charCodeAt(0))
@@ -477,6 +705,22 @@
                 ws.onmessage = (m) => {
                     const jsonParsed = JSON.parse(m.data)
 
+                    if (jsonParsed.retMsg) {
+                        if (jsonParsed.retMsg === "SUCCESS") {
+                            // console.log("Connected to server")
+                            const connectionMsg = document.createElement("div")
+                            connectionMsg.innerHTML = "<span style='color: green;'>Connected</span>"
+                            document.getElementById(`accessTokenDiv${team}`).appendChild(connectionMsg)
+                            startButton.style.display = "block"
+                        } else {
+                            // console.log("Failed to connect to server: " + jsonParsed.retMsg)
+                            const connectionMsg = document.createElement("div")
+                            connectionMsg.innerHTML = "Connection <span style='color: red;'>Failed</span>: " + jsonParsed.retMsg
+                            document.getElementById(`accessTokenDiv${team}`).appendChild(connectionMsg)
+                            startButton.style.display = "none"
+                        }
+                    }
+
                     if (jsonParsed.ver === "2") {
                         ws.send(JSON.stringify({
                             "ver": "2",
@@ -490,22 +734,38 @@
                 };
             }
 
+            let a
             function onmessage(data, team, platform) {
                 if (data.bdy && data.bdy.length) {
                     try {
-                        const profile = JSON.parse(data.bdy[0].profile)
-                        const msg = data.bdy[0].msg
-                        if (profile && msg) {
-                            if (gameOptions.commandsOnly) {
-                                if (msg.startsWith(commandMark)) {
+                        for (let bdy of data.bdy) {
+                            const profile = JSON.parse(bdy.profile)
+                            const msg = bdy.msg
+                            if (profile && msg) {
+                                if (gameOptions.commandsOnly) {
+                                    if (msg.startsWith(commandMark)) {
+                                        messageToGame(profile.nickname, msg, team, platform)
+                                    }
+                                } else {
                                     messageToGame(profile.nickname, msg, team, platform)
                                 }
-                            } else {
-                                messageToGame(profile.nickname, msg, team, platform)
                             }
                         }
+                        // const profile = JSON.parse(data.bdy[0].profile)
+                        // const msg = data.bdy[0].msg
+                        // if (profile && msg) {
+                        //     if (gameOptions.commandsOnly) {
+                        //         if (msg.startsWith(commandMark)) {
+                        //             messageToGame(profile.nickname, msg, team, platform)
+                        //         }
+                        //     } else {
+                        //         messageToGame(profile.nickname, msg, team, platform)
+                        //     }
+                        // }
                     } catch (error) {
                         console.log(data)
+                        a = data
+                        console.log(error)
                     }
                     // console.log(`${name} : ${msg}`)
                 }
@@ -514,19 +774,95 @@
 
         <!-- game control -->
         <script>
+            const msgRegex = /\d+/g
+            const colorRegex = /(빨|주|노|초|파|남|보|red|orange|yellow|green|blue|navy|purple)/g
+
+
             function messageToGame(nameFromChat, msg, team, platform) {
                 const name = platformEmoji[platform] + nameFromChat
+                let msgMatch = msg.match(msgRegex)
+                let msgMatchLength = 0
+                if (msgMatch) {
+                    msgMatchLength = msgMatch.length
+                }
+                let x
+                let y
+
+                if (msgMatchLength >= 2) {
+                    x = (parseInt(msgMatch[0]) % xtiles) * tilesize - Math.floor(tilesize / 2)
+                    y = (parseInt(msgMatch[1]) % xtiles) * tilesize - Math.floor(tilesize / 2)
+                } else if (players[name]) {
+                    x = players[localUserName].x
+                    y = players[localUserName].y
+                } else {
+                    x = Math.floor(xtiles * tilesize * Math.random())
+                    y = Math.floor(ytiles * tilesize * Math.random())
+                }
+
                 if (players[name]) {
-                    changeDestination(name, Math.min(msg.length * 20, 900), Math.min(msg.length * 20, 900))
+                    changeDestination(name, x, y)
                     players[name].chatting = msg
                     players[name].chattingTimeout = gameOptions.chattingTimeout
                 } else {
-                    const numberOfPlayers = Object.keys(players).length
                     const numberOfAlivePlayers = alivePlayers.length
-                    if (numberOfPlayers < gameOptions.maxPlayers && numberOfAlivePlayers < gameOptions.maxAlivePlayers && (!gameOptions.noMoreNewPlayers)) {
-                        addPlayer(Math.round(900 * Math.random()), Math.round(900 * Math.random()), Math.round(900 * Math.random()), Math.round(900 * Math.random()), name, "swordman")
-                        players[name].team = team
+                    const numberOfAlivePlayersByTeam = alivePlayersByTeam[team].length
+                    if (gameOptions.mode === "chatVsChat" && numberOfAlivePlayersByTeam > gameOptions.maxAlivePlayers / gameOptions.numberOfTeams) {
+                        return
                     }
+                    if (numberOfPlayers < gameOptions.maxPlayers && numberOfAlivePlayers < gameOptions.maxAlivePlayers && (!gameOptions.noMoreNewPlayers)) {
+                        let branch = branchesForVS[Math.floor(Math.random() * branchesForVS.length)]
+
+                        if (gameOptions.mode === "ox") {
+                            branch = "assasin"
+                        }
+
+                        addPlayer(x, y, players[localUserName].x, players[localUserName].y, name, branch, team)
+                        players[name].chatting = msg
+                        players[name].chattingTimeout = gameOptions.chattingTimeout
+
+                        if (gameOptions.mode === "survivors") {
+                            players[name].lv = 0
+                            promoteMob(name)
+                            players[name].bodyColor = Math.floor(360 * Math.random()) + "deg"
+                        }
+
+                        changeDestination(name, players[localUserName].x, players[localUserName].y)
+                    }
+                }
+
+                if (gameOptions.mode === "ox") {
+                    let colorMatch = msg.match(colorRegex)
+                    if (colorMatch) {
+                        changeColor(name, colorMatch[0])
+                    }
+                }
+            }
+        </script>
+
+        <script>
+            function changeColor(name, color) {
+                switch (color) {
+                    case "빨":
+                        players[name].bodyColor = "red"
+                        break
+                    case "주":
+                        players[name].bodyColor = "orange"
+                        break
+                    case "노":
+                        players[name].bodyColor = "yellow"
+                        break
+                    case "초":
+                        players[name].bodyColor = "green"
+                        break
+                    case "파":
+                        players[name].bodyColor = "blue"
+                        break
+                    case "남":
+                        players[name].bodyColor = "navy"
+                        break
+                    case "보":
+                        players[name].bodyColor = "purple"
+                        break
                 }
             }
         </script>
@@ -536,9 +872,24 @@
             // This should not be changed during game. change this before animate() starts
             // 1. because of playersAt dictionary
             // 2. because of change while in a middle of the frame loop (<= this can be avoided by putting change at the end of the loop)
-            xtiles = 64
-            ytiles = 64
-            tilesize = 16
+
+            const urlParams = new URLSearchParams(window.location.search)
+            const xtiles = parseInt(urlParams.get("xtiles")) || 50
+            const ytiles = parseInt(urlParams.get("ytiles")) || 50
+            const tilesize = parseInt(urlParams.get("tilesize")) || 16
+
+            document.getElementById("xtiles").value = xtiles
+            document.getElementById("ytiles").value = ytiles
+            document.getElementById("tilesize").value = tilesize
+
+            document.getElementById("playerList").style.height = ytiles * tilesize + "px"
+
+            document.getElementById("obutton").style.width = Math.floor(xtiles * tilesize / 2) + "px"
+            document.getElementById("xbutton").style.width = Math.floor(xtiles * tilesize / 2) + "px"
+
+            // xtiles = 64
+            // ytiles = 64
+            // tilesize = 16
 
         </script>
         <script>
@@ -573,6 +924,7 @@
             // let newratio = 1
             window.addEventListener("resize", () => {
                 setCanvasRatio()
+                updatePattern()
             })
 
             function setCanvasRatio() {
@@ -614,13 +966,166 @@
         </script>
 
         <script>
-            // const fps = 30
             let basespeed = 0.03 * (tilesize / 32)
+
+            const survivorsDamage = 20
+            const mobs = ["slime", "megaslime", "pig", "orc", "demon", "dragon"]
+
+            function promoteMob(mob) {
+                const player = players[mob]
+                if (player.lv < mobs.length) {
+                    player.lv += 1
+                }
+
+                player.branch = mobs[player.lv - 1]
+                player.sprite = mobs[player.lv - 1]
+                player.hp = branches[mobs[player.lv - 1]].maxhp
+                player.damage = branches[mobs[player.lv - 1]].basedamage
+                player.cool = branches[mobs[player.lv - 1]].cool
+                player.speed = branches[mobs[player.lv - 1]].speed
+
+
+                if (player.lv !== 1) {
+                    oldx = player.x
+                    oldy = player.y
+                    oldAt = Math.floor(player.x / tilesize) + Math.floor(player.y / tilesize) * xtiles
+                    player.x = Math.floor(xtiles * tilesize / 2)
+                    player.y = Math.floor(ytiles * tilesize / 2)
+                    newAt = Math.floor(player.x / tilesize) + Math.floor(player.y / tilesize) * xtiles
+                    getplayersAt(oldAt).delete(player.name)
+                    getplayersAt(newAt).add(player.name)
+                    changeDestination(player.name, oldx, oldy)
+                }
+
+
+                effects.push({lifetime: 1, x: player.x, y: player.y, animationTick:0, animationFrame:0, sprite:"4"})
+            }
+
+            const upgradeSelectDiv = document.getElementById("upgradeSelect")
+            function promoteLocalUser() {
+                upgradeSelectDiv.style.display = "block"
+                var buttons = Array.from(upgradeSelectDiv.children);
+
+                // Hide all buttons
+                buttons.forEach(function(button) {
+                    button.style.display = 'none';
+                });
+
+                // Randomly pick three buttons and show them
+                for (var i = 0; i < 3; i++) {
+                    var index = Math.floor(Math.random() * buttons.length);
+                    var button = buttons[index];
+                    button.style.display = 'block';  // Show the button
+                    buttons.splice(index, 1);  // Remove the button from the array
+                }
+            }
+
+            function speedUp() {
+                players[localUserName].speed *= 1.1
+                upgradeSelectDiv.style.display = "none"
+            }
+
+            function maxHPup() {
+                branches["survivor"].maxhp *= 1.2
+                upgradeSelectDiv.style.display = "none"
+            }
+
+            function recoverHP() {
+                players[localUserName].hp = branches[players[localUserName].branch].maxhp
+                upgradeSelectDiv.style.display = "none"
+            }
+
+            function coolDownDecrease() {
+                branches["survivor"].cool *= 0.95
+                upgradeSelectDiv.style.display = "none"
+            }
+
+            const arrowAngleChange = 3.14 / 6 //deg
+            const swordAngleChange = 3.14 / 4
+
+            const survivorArrow = {}
+            survivorArrow["arrowSpeed"] = 12 * basespeed
+            survivorArrow["arrowAngle"] = 0
+            survivorArrow["nHits"] = 1
+            survivorArrow["damage"] = 5
+            survivorArrow["lifetime"] = 800
+
+            const survivorSword = {}
+            survivorSword["arrowSpeed"] = 4 * basespeed
+            survivorSword["arrowAngle"] = 3.14 / 4
+            survivorSword["nHits"] = 1
+            survivorSword["damage"] = 10
+            survivorSword["lifetime"] = 400
+
+            function addArrow() {
+                survivorArrow["arrowAngle"] += arrowAngleChange
+                branches["survivor"].projectiles.push({type:"arrow", arrowSpeed: survivorArrow["arrowSpeed"], arrowAngle: survivorArrow["arrowAngle"], nHits: survivorArrow["nHits"], damage: survivorArrow["damage"], lifetime: survivorArrow["lifetime"]})
+                upgradeSelectDiv.style.display = "none"
+            }
+
+            function addArrowSpeed() {
+                survivorArrow["arrowSpeed"] *= 1.2
+                for (let projectile of branches["survivor"].projectiles) {
+                    if (projectile["type"] === "arrow") {
+                        projectile.arrowSpeed = survivorArrow["arrowSpeed"]
+                    }
+                }
+                upgradeSelectDiv.style.display = "none"
+            }
+
+            function addArrowNHits() {
+                survivorArrow["nHits"] += 1
+                for (let projectile of branches["survivor"].projectiles) {
+                    if (projectile["type"] === "arrow") {
+                        projectile.nHits = survivorArrow["nHits"]
+                    }
+                }
+            }
+
+            function addArrowDamage() {
+                survivorArrow["damage"] = Math.round(survivorArrow["damage"] * 1.2)
+                for (let projectile of branches["survivor"].projectiles) {
+                    if (projectile["type"] === "arrow") {
+                        projectile.damage = survivorArrow["damage"]
+                    }
+                }
+            }
+
+            function addSword() {
+                survivorSword["arrowAngle"] += swordAngleChange
+                branches["survivor"].projectiles.push({type:"sword", arrowSpeed: survivorSword["arrowSpeed"], arrowAngle: survivorSword["arrowAngle"], nHits: survivorSword["nHits"], damage: survivorSword["damage"], lifetime: survivorSword["lifetime"]})
+                upgradeSelectDiv.style.display = "none"
+            }
+
+            function addSwordSpeed() {
+                survivorSword["arrowSpeed"] *= 1.2
+                for (let projectile of branches["survivor"].projectiles) {
+                    if (projectile["type"] === "sword") {
+                        projectile.arrowSpeed = survivorSword["arrowSpeed"]
+                    }
+                }
+                upgradeSelectDiv.style.display = "none"
+            }
+
+            function addSwordDamage() {
+                survivorSword["damage"] = Math.round(survivorSword["damage"] * 1.3)
+                for (let projectile of branches["survivor"].projectiles) {
+                    if (projectile["type"] === "sword") {
+                        projectile.damage = survivorSword["damage"]
+                    }
+                }
+            }
+
+        </script>
+
+        <script>
+            // const fps = 30
+
             let attShowDuration = 500
             let arrowLife = 400
             // let arrowSpeed = 0.12
 
-            let localUserName = "my"
+            let localUserName = "...주인공"
 
             function updatePlayers(deltatime) {
                 //console.log(Math.floor(deltatime))
@@ -634,6 +1139,9 @@
                     let isMoved = false
 
                     const speed = player.speed
+
+                    let oldAt
+                    let newAt
 
                     if (dl > speed * deltatime || player.force > 0) {
                         xlater = ((player.x + speed * deltatime * dx / dl) + (xtiles * tilesize)) % (xtiles * tilesize)
@@ -650,8 +1158,8 @@
                             }
                         }
 
-                        const oldAt = Math.floor(player.x / tilesize) + Math.floor(player.y / tilesize) * xtiles
-                        const newAt = Math.floor(xlater / tilesize) + Math.floor(ylater / tilesize) * xtiles
+                        oldAt = Math.floor(player.x / tilesize) + Math.floor(player.y / tilesize) * xtiles
+                        newAt = Math.floor(xlater / tilesize) + Math.floor(ylater / tilesize) * xtiles
 
                         if (oldAt !== newAt) {
                             if (getplayersAt(newAt).size < gameOptions.maxPlayersPerTile) {
@@ -679,6 +1187,29 @@
                         }
                     }
 
+                    // Survivors Mode
+                    if (gameOptions.mode === "survivors") {
+                        if (oldAt !== newAt) {
+                            if (player.name === localUserName) {
+                                for (let enemy of getplayersAt(newAt)) {
+                                    if (enemy !== localUserName) {
+                                        damageTarget(localUserName, enemy, survivorsDamage)
+                                        effects.push({lifetime: 1, x: players[localUserName].x, y: players[localUserName].y, animationTick:0, animationFrame:0, sprite:"1"})
+                                        promoteMob(enemy)
+                                        playSound("speed")
+                                    }
+                                }
+                            } else {
+                                if (getplayersAt(newAt).has(localUserName)) {
+                                    damageTarget(localUserName, player.name, survivorsDamage)
+                                    effects.push({lifetime: 1, x: players[localUserName].x, y: players[localUserName].y, animationTick:0, animationFrame:0, sprite:"1"})
+                                    promoteMob(player.name)
+                                    playSound("speed")
+                                }
+                            }
+                        }
+                    }
+
                     // Motion
                     const maxTicks = sprite[player.sprite][player.motion].crops.length * sprite[player.sprite][player.motion].holds
                     player.animationTick = (player.animationTick + 1)
@@ -700,6 +1231,10 @@
 
                         // Projectile
                         const newProjectiles = branches[player.branch].projectiles
+
+                        if (player.name === localUserName) {
+                            playSound("attack")
+                        }
 
                         for (const projectile of newProjectiles) {
                             projectiles.push({
@@ -727,7 +1262,9 @@
                             }
                         }
 
-                        changePlayerState(player, "attack1")
+                        if (player.sprite === "swordman" || player.sprite === "archer" ){
+                            changePlayerState(player, "attack1")
+                        }
                     }
 
                     // status.innerHTML = `${player.cool}`
@@ -776,6 +1313,7 @@
                             players[target].forceduration = 150
 
                             effects.push({lifetime: 500, x: players[target].x, y: players[target].y})
+                            effects.push({lifetime: 1, x: players[target].x, y: players[target].y, animationTick:0, animationFrame:0, sprite:"3"})
 
                             damageTarget(target, projectile.owner, players[projectile.owner].damage * projectile.damage)
 
@@ -798,6 +1336,10 @@
                     players[target].hp = branches[players[target].branch].maxhp
                 }
 
+                if (dealer === localUserName && amount > 0) {
+                    playSound("shield")
+                }
+
                 players[target].damageMsg = players[target].hp - oldhp
                 players[target].damageMsgTimeout = gameOptions.damageMsgTimeout
 
@@ -808,6 +1350,7 @@
                         players[target].hp = branches[players[target].branch].maxhp
                     } else {
                         alivePlayers.splice(alivePlayers.indexOf(target), 1)
+                        alivePlayersByTeam[players[target].team].splice(alivePlayersByTeam[players[target].team].indexOf(target), 1)
                         getplayersAt(Math.floor(players[target].x / tilesize) + Math.floor(players[target].y / tilesize) * xtiles).delete(target)
                     }
 
@@ -817,13 +1360,29 @@
 
             function updateEffects(deltatime) {
                 for (const effect of effects) {
-                    effect.lifetime -= deltatime
+                    if (effect.sprite) {
+                        effect.animationTick += 1
+
+                        if (effect.animationTick === sprite["effects"][effect.sprite].holds) {
+                            effect.animationTick = 0
+                            effect.animationFrame += 1
+
+                            if (effect.animationFrame === sprite["effects"][effect.sprite].crops.length) {
+                                effect.lifetime = -1
+                            }
+                        }
+                    } else {
+                        // Simple White Tile Effect
+                        effect.lifetime -= deltatime
+                    }
                 }
                 effects = effects.filter(effect => effect.lifetime > 0)
             }
 
             const players = {}
+            let numberOfPlayers = Object.keys(players).length
             const alivePlayers = []
+            const alivePlayersByTeam = {1: [], 2: []}
 
             let projectiles = []
             let effects = []
@@ -853,7 +1412,7 @@
             //     }
             // }
 
-            function addPlayer(x, y, xto, yto, name, branch) {
+            function addPlayer(x, y, xto, yto, name, branch, team) {
                 players[name] = {
                     name: name,
                     x: x,
@@ -881,16 +1440,22 @@
                     chattingTimeout: gameOptions.chattingTimeout,
                     damageMsg: 0,
                     damageMsgTimeout: gameOptions.damageMsgTimeout,
-                    team: 0,
+                    team: team,
+                    exp:0,
+                    lv:1,
+                    bodyColor: "default",
                 }
                 players[name]["motion"] = players[name].state + players[name].direction
                 changeDestination(name, xto, yto) // Update direction dx dy
 
                 alivePlayers.push(name)
+                alivePlayersByTeam[team].push(name)
 
                 getplayersAt(Math.floor(x / tilesize) + Math.floor(y / tilesize) * xtiles).add(name)
 
                 addPlayerToTable(name, players[name].kill, players[name].death)
+
+                numberOfPlayers += 1
             }
 
 
@@ -971,30 +1536,59 @@
                     drawGrid()
                 }
 
+                if (gameOptions.seePath) {
+                    drawPaths()
+                }
+
                 const lefttopcanvasX = canvas.getBoundingClientRect().left
                 const lefttopcanvasY = canvas.getBoundingClientRect().top
                 const renderBufferRange = tilesize
-
-                drawPlayers(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
-                drawProjectiles(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
-                drawEffects(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
 
                 drawNames(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
                 if (gameOptions.seeChattings) {
                     drawChattings(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
                 }
+
+                drawPlayers(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+                drawProjectiles(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+                drawEffects(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
+
                 if (gameOptions.seeDamages) {
                     drawDamages(lefttopcanvasX, lefttopcanvasY, renderBufferRange)
                 }
+
+                drawHealthBar()
+                drawExpBar()
             }
+
+        function drawHealthBar() {
+            const player = players[localUserName]
+            ctx.fillStyle = "red"
+            ctx.fillRect(player.x - tilesize / 2, player.y - tilesize, tilesize, tilesize / 4)
+            ctx.fillStyle = "green"
+            ctx.fillRect(player.x - tilesize / 2, player.y - tilesize, player.hp / branches[player.branch].maxhp * tilesize, tilesize / 4)
+        }
+
+        const maxExp = 100
+        const expPerKill = 40
+        function drawExpBar() {
+            const player = players[localUserName]
+            ctx.fillStyle = "gray"
+            ctx.fillRect(player.x - tilesize / 2, player.y - tilesize / 4 * 3, tilesize, tilesize / 4)
+            ctx.fillStyle = "cyan"
+            ctx.fillRect(player.x - tilesize / 2, player.y - tilesize / 4 * 3, player.exp / maxExp * tilesize, tilesize / 4)
+        }
+
+        function drawPaths() {
+            for (const name of alivePlayers) {
+                const player = players[name]
+                drawPath(Math.round(player.x), Math.round(player.y), Math.round(player.xto), Math.round(player.yto), player.team)
+            }
+        }
 
         function drawPlayers(lefttopcanvasX, lefttopcanvasY, renderBufferRange) {
             for (const name of alivePlayers) {
                 const player = players[name]
-
-                if (gameOptions.seePath === true) {
-                    drawPath(Math.round(player.x), Math.round(player.y), Math.round(player.xto), Math.round(player.yto), player.team)
-                }
 
                 if (-renderBufferRange < player.x + lefttopcanvasX && player.x + lefttopcanvasX < window.innerWidth + renderBufferRange && -renderBufferRange < player.y + lefttopcanvasY && player.y + lefttopcanvasY < window.innerHeight + renderBufferRange) {
                     draw(player.x, player.y, player.name)
@@ -1079,13 +1673,15 @@
 
         function drawEffects() {
             for (const effect of effects) {
-                drawEffect(effect.x, effect.y)
+                drawEffect(effect)
             }
         }
 
         </script>
 
         <script>
+            const branchesForVS = ["swordman", "archer"]
+            const branchesForVSlength = branchesForVS.length
             const branches = {
                 "swordman": {
                     cool: 2000,
@@ -1101,8 +1697,194 @@
                         {dx: 0, dy: 0, damage: -1,}, // <= Self heal
                         //{dx: tilesize, dy: 0, damage: -1, nHits: 1},
                     ],
+                },
+                "archer": {
+                    cool: 2500,
+                    maxhp: 100,
+                    basedamage: 10,
+                    speed: basespeed * 1.5,
+                    projectiles: [
+                        {arrowSpeed: 12 * basespeed, arrowAngle: 0, nHits: 1, damage: 1, lifetime: 800},
+                    ],
+                    hitscans: [
+                        {dx: 0, dy: 0, damage: -1,}, // <= Self heal
+                        //{dx: tilesize, dy: 0, damage: -1, nHits: 1},
+                    ],
+                },
+                "assasin": {
+                    cool: 2000,
+                    maxhp: 100,
+                    basedamage: 10,
+                    speed: basespeed * 1.7,
+                    projectiles: [],
+                    hitscans: [],
+                },
+                "survivor": {
+                    cool: 1600,
+                    maxhp: 100,
+                    basedamage: 1,
+                    speed: basespeed * 1.5,
+                    projectiles: [
+                        {type: "sword", arrowSpeed: 4 * basespeed, arrowAngle: 0, nHits: 1, damage: 10, lifetime: 400},
+                        {type: "sword", arrowSpeed: 4 * basespeed, arrowAngle: 3.14 / 4, nHits: 1, damage: 10, lifetime: 400},
+                        {type: "sword", arrowSpeed: 4 * basespeed, arrowAngle: -3.14 / 4, nHits: 1, damage: 10, lifetime: 400},
+                        {type: "arrow", arrowSpeed: 12 * basespeed, arrowAngle: 0, nHits: 1, damage: 5, lifetime: 800},
+                    ],
+                    hitscans: [
+                        {dx: 0, dy: 0, damage: -1,}, // <= Self heal
+                        //{dx: tilesize, dy: 0, damage: -1, nHits: 1},
+                    ],
+                },
+                "slime": {
+                    cool: 2000,
+                    maxhp: 40,
+                    basedamage: 10,
+                    speed: basespeed * 1.2,
+                    projectiles: [],
+                    hitscans: [],
+                },
+                "megaslime": {
+                    cool: 2000,
+                    maxhp: 80,
+                    basedamage: 10,
+                    speed: basespeed * 1.4,
+                    projectiles: [],
+                    hitscans: [],
+                },
+                "pig": {
+                    cool: 2000,
+                    maxhp: 150,
+                    basedamage: 10,
+                    speed: basespeed * 1.5,
+                    projectiles: [],
+                    hitscans: [],
+                },
+                "orc": {
+                    cool: 2000,
+                    maxhp: 300,
+                    basedamage: 10,
+                    speed: basespeed * 1.5,
+                    projectiles: [],
+                    hitscans: [],
+                },
+                "demon": {
+                    cool: 2000,
+                    maxhp: 500,
+                    basedamage: 10,
+                    speed: basespeed * 1.8,
+                    projectiles: [],
+                    hitscans: [],
+                },
+                "dragon": {
+                    cool: 2000,
+                    maxhp: 1000,
+                    basedamage: 10,
+                    speed: basespeed * 2.3,
+                    projectiles: [],
+                    hitscans: [],
+                },
+            }
+        </script>
+
+        <script>
+            const soundfolder = "https://cdn.jsdelivr.net/gh/chimchat/chimchat.github.io@master/sound/"
+
+            const sounds = {
+                confirm: new Audio(soundfolder + "013_Confirm_03.mp3"),
+                start: new Audio(soundfolder + "17_SNES-Castle01.mp3"),
+                end: new Audio(soundfolder + "07_SNES-Event11.mp3"),
+                levelup: new Audio(soundfolder + "02_Heal_02.mp3"),
+                attack: new Audio(soundfolder + "35_Miss_Evade.mp3"),
+                thraw: new Audio(soundfolder + "77_flesh.mp3"),
+                speed: new Audio(soundfolder + "48_Speed_Up_02.mp3"),
+                shield: new Audio(soundfolder + "15_Impact_flesh.mp3"),
+            }
+
+            const musicSounds = ["start", "end"]
+
+            sounds["start"].loop = true
+            sounds["start"].addEventListener("ended", function() {
+                sounds["start"].currentTime = 0
+                sounds["start"].play()
+            }, false)
+
+            function playSound(name) {
+                if (gameOptions.sound) {
+                    sounds[name].play()
+                }
+
+                if (name === "end") {
+                    sounds["start"].pause()
                 }
             }
+
+            function changeMusicSoundVolume(volume) {
+                if (!gameOptions.sound) {
+                    toggleSound()
+                }
+
+                if (volume < 0) {
+                    volume = 0
+                }
+                if (volume > 1) {
+                    volume = 1
+                }
+                for (let name of musicSounds) {
+                    sounds[name].volume = volume
+                }
+
+                if (gameOptions.isGameStart && volume > 0) {
+                    sounds["start"].play()
+                }
+            }
+
+            function changeEffectSoundVolume(volume) {
+                if (!gameOptions.sound) {
+                    toggleSound()
+                }
+
+                if (volume < 0) {
+                    volume = 0
+                }
+                if (volume > 1) {
+                    volume = 1
+                }
+                for (let name in sounds) {
+                    if (!musicSounds.includes(name)) {
+                        sounds[name].volume = volume
+                    }
+                }
+                sounds["confirm"].play()
+            }
+
+            const soundToggleButton = document.getElementById("soundToggleButton")
+            const musicVolumeSlider = document.getElementById("musicVolumeSlider")
+            const effectVolumeSlider = document.getElementById("effectVolumeSlider")
+            function toggleSound() {
+                gameOptions.sound = !gameOptions.sound
+                soundToggleButton.textContent = gameOptions.sound ? "🔊Sound" : "🔇Muted"
+
+                if (!gameOptions.sound) {
+                    // If sound is toggled off, stop all sounds
+                    for (let name in sounds) {
+                        sounds[name].pause();
+                        sounds[name].currentTime = 0;  // Optional: reset the sound to the start
+                    }
+
+                    musicVolumeSlider.value = 0
+                    effectVolumeSlider.value = 0
+                }
+
+                if (gameOptions.sound) {
+                    if (musicVolumeSlider.value == 0 && effectVolumeSlider.value == 0) {
+                        musicVolumeSlider.value = 0.3
+                        effectVolumeSlider.value = 0.3
+                    }
+                    changeMusicSoundVolume(musicVolumeSlider.value)
+                    changeEffectSoundVolume(effectVolumeSlider.value)
+                }
+            }
+
         </script>
 
         <script>
@@ -1110,8 +1892,29 @@
             testimage.src = "https://raw.githubusercontent.com/chimlang/realtime/main/public/image/Axeman.png"
 
             const assets = {}
+            const imagefolder = "https://cdn.jsdelivr.net/gh/chimchat/chimchat.github.io@master/image/"
             assets["swordman"] = new Image()
-            assets["swordman"].src = "https://chimlang.github.io/credit/updates/img/SwordsmanRed.png"
+            assets["swordman"].src = imagefolder + "SwordsmanRed.png"
+            assets["archer"] = new Image()
+            assets["archer"].src = imagefolder + "BowmanRed.png"
+            assets["assasin"] = new Image()
+            assets["assasin"].src = imagefolder + "AssasinRed.png"
+            assets["slime"] = new Image()
+            assets["slime"].src = imagefolder + "SlimeBlue.png"
+            assets["megaslime"] = new Image()
+            assets["megaslime"].src = imagefolder + "KingSlimeBlue.png"
+            assets["pig"] = new Image()
+            assets["pig"].src = imagefolder + "Pig.png"
+            assets["orc"] = new Image()
+            assets["orc"].src = imagefolder + "Orc.png"
+            assets["demon"] = new Image()
+            assets["demon"].src = imagefolder + "RedDemon.png"
+            assets["dragon"] = new Image()
+            assets["dragon"].src = imagefolder + "RedDragon.png"
+
+            assets["effects"] = new Image()
+            assets["effects"].src = imagefolder + "effects.png"
+
 
             const sprite = {}
             sprite["swordman"] = {
@@ -1119,15 +1922,114 @@
                 "idleup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}], holds:15},
                 "idleright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}], holds:15},
                 "idleleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}], holds:15},
-                "walkdown": {crops:[{x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}], holds:5},
-                "walkup": {crops:[{x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}], holds:5},
-                "walkright": {crops:[{x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}], holds:5},
-                "walkleft": {crops:[{x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}], holds:5},
-                "attack1down": {crops:[{x:0, y:64, w:16, h:16}, {x:16, y:64, w:16, h:16}, {x:32, y:64, w:16, h:16}, {x:48, y:64, w:16, h:16}], holds:4},
-                "attack1up": {crops:[{x:0, y:80, w:16, h:16}, {x:16, y:80, w:16, h:16}, {x:32, y:80, w:16, h:16}, {x:48, y:80, w:16, h:16}], holds:4},
-                "attack1right": {crops:[{x:0, y:96, w:16, h:16}, {x:16, y:96, w:16, h:16}, {x:32, y:96, w:16, h:16}, {x:48, y:96, w:16, h:16}], holds:4},
-                "attack1left": {crops:[{x:0, y:112, w:16, h:16}, {x:16, y:112, w:16, h:16}, {x:32, y:112, w:16, h:16}, {x:48, y:112, w:16, h:16}], holds:4},
+                "walkdown": {crops:[{x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}], holds:10},
+                "walkup": {crops:[{x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}], holds:10},
+                "walkright": {crops:[{x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}], holds:10},
+                "walkleft": {crops:[{x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}], holds:10},
+                "attack1down": {crops:[{x:0, y:64, w:16, h:16}, {x:16, y:64, w:16, h:16}, {x:32, y:64, w:16, h:16}, {x:48, y:64, w:16, h:16}], holds:8},
+                "attack1up": {crops:[{x:0, y:80, w:16, h:16}, {x:16, y:80, w:16, h:16}, {x:32, y:80, w:16, h:16}, {x:48, y:80, w:16, h:16}], holds:8},
+                "attack1right": {crops:[{x:0, y:96, w:16, h:16}, {x:16, y:96, w:16, h:16}, {x:32, y:96, w:16, h:16}, {x:48, y:96, w:16, h:16}], holds:8},
+                "attack1left": {crops:[{x:0, y:112, w:16, h:16}, {x:16, y:112, w:16, h:16}, {x:32, y:112, w:16, h:16}, {x:48, y:112, w:16, h:16}], holds:8},
             }
+            sprite["archer"] = {
+                "idledown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}], holds:15},
+                "idleup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}], holds:15},
+                "idleright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}], holds:15},
+                "idleleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}], holds:15},
+                "walkdown": {crops:[{x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}], holds:10},
+                "walkup": {crops:[{x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}], holds:10},
+                "walkright": {crops:[{x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}], holds:10},
+                "walkleft": {crops:[{x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}], holds:10},
+                "attack1down": {crops:[{x:0, y:64, w:16, h:16}, {x:16, y:64, w:16, h:16}, {x:32, y:64, w:16, h:16}], holds:12},
+                "attack1up": {crops:[{x:0, y:80, w:16, h:16}, {x:16, y:80, w:16, h:16}, {x:32, y:80, w:16, h:16}], holds:12},
+                "attack1right": {crops:[{x:0, y:112, w:16, h:16}, {x:16, y:112, w:16, h:16}, {x:32, y:112, w:16, h:16}], holds:12},
+                "attack1left": {crops:[{x:0, y:96, w:16, h:16}, {x:16, y:96, w:16, h:16}, {x:32, y:96, w:16, h:16}], holds:12},
+            }
+            sprite["assasin"] = {
+                "idledown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}], holds:15},
+                "idleup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}], holds:15},
+                "idleright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}], holds:15},
+                "idleleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}], holds:15},
+                "walkdown": {crops:[{x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}], holds:10},
+                "walkup": {crops:[{x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}], holds:10},
+                "walkright": {crops:[{x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}], holds:10},
+                "walkleft": {crops:[{x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}], holds:10},
+                "attack1down": {crops:[{x:0, y:64, w:16, h:16}, {x:16, y:64, w:16, h:16}, {x:32, y:64, w:16, h:16}, {x:48, y:64, w:16, h:16}], holds:8},
+                "attack1up": {crops:[{x:0, y:80, w:16, h:16}, {x:16, y:80, w:16, h:16}, {x:32, y:80, w:16, h:16}, {x:48, y:80, w:16, h:16}], holds:8},
+                "attack1right": {crops:[{x:0, y:96, w:16, h:16}, {x:16, y:96, w:16, h:16}, {x:32, y:96, w:16, h:16}, {x:48, y:96, w:16, h:16}], holds:8},
+                "attack1left": {crops:[{x:0, y:112, w:16, h:16}, {x:16, y:112, w:16, h:16}, {x:32, y:112, w:16, h:16}, {x:48, y:112, w:16, h:16}], holds:8},
+            }
+            sprite["slime"] = {
+                "idledown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}], holds:20},
+                "idleup": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}], holds:20},
+                "idleright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}], holds:20},
+                "idleleft": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}], holds:20},
+                "walkdown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}, {x:80, y:0, w:16, h:16}], holds:10},
+                "walkup": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}, {x:80, y:48, w:16, h:16}], holds:10},
+                "walkright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}, {x:80, y:32, w:16, h:16}], holds:10},
+                "walkleft": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}, {x:80, y:16, w:16, h:16}], holds:10},
+            }
+            sprite["megaslime"] = {
+                "idledown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}], holds:20},
+                "idleup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}], holds:20},
+                "idleright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}], holds:20},
+                "idleleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}], holds:20},
+                "walkdown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}, {x:80, y:0, w:16, h:16}], holds:10},
+                "walkup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}, {x:80, y:16, w:16, h:16}], holds:10},
+                "walkright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}, {x:80, y:32, w:16, h:16}], holds:10},
+                "walkleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}, {x:80, y:48, w:16, h:16}], holds:10},
+            }
+            sprite["pig"] = {
+                "idledown": {crops:[{x:0, y:64, w:16, h:16}, {x:16, y:64, w:16, h:16}, {x:32, y:64, w:16, h:16}], holds:20},
+                "idleup": {crops:[{x:0, y:80, w:16, h:16}, {x:16, y:80, w:16, h:16}, {x:32, y:80, w:16, h:16}], holds:20},
+                "idleright": {crops:[{x:0, y:96, w:16, h:16}, {x:16, y:96, w:16, h:16}, {x:32, y:96, w:16, h:16}], holds:20},
+                "idleleft": {crops:[{x:0, y:112, w:16, h:16}, {x:16, y:112, w:16, h:16}, {x:32, y:112, w:16, h:16}], holds:20},
+                "walkdown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}], holds:10},
+                "walkup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}], holds:10},
+                "walkright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}], holds:10},
+                "walkleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}], holds:10},
+            }
+            sprite["orc"] = {
+                "idledown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}], holds:15},
+                "idleup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}], holds:15},
+                "idleright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}], holds:15},
+                "idleleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}], holds:15},
+                "walkdown": {crops:[{x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}], holds:10},
+                "walkup": {crops:[{x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}], holds:10},
+                "walkright": {crops:[{x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}], holds:10},
+                "walkleft": {crops:[{x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}], holds:10},
+            }
+            sprite["demon"] = {
+                "idledown": {crops:[{x:0, y:0, w:16, h:16}, {x:16, y:0, w:16, h:16}], holds:20},
+                "idleup": {crops:[{x:0, y:16, w:16, h:16}, {x:16, y:16, w:16, h:16}], holds:20},
+                "idleright": {crops:[{x:0, y:32, w:16, h:16}, {x:16, y:32, w:16, h:16}], holds:20},
+                "idleleft": {crops:[{x:0, y:48, w:16, h:16}, {x:16, y:48, w:16, h:16}], holds:20},
+                "walkdown": {crops:[{x:16, y:0, w:16, h:16}, {x:32, y:0, w:16, h:16}, {x:48, y:0, w:16, h:16}, {x:64, y:0, w:16, h:16}], holds:10},
+                "walkup": {crops:[{x:16, y:16, w:16, h:16}, {x:32, y:16, w:16, h:16}, {x:48, y:16, w:16, h:16}, {x:64, y:16, w:16, h:16}], holds:10},
+                "walkright": {crops:[{x:16, y:32, w:16, h:16}, {x:32, y:32, w:16, h:16}, {x:48, y:32, w:16, h:16}, {x:64, y:32, w:16, h:16}], holds:10},
+                "walkleft": {crops:[{x:16, y:48, w:16, h:16}, {x:32, y:48, w:16, h:16}, {x:48, y:48, w:16, h:16}, {x:64, y:48, w:16, h:16}], holds:10},
+            }
+            sprite["dragon"] = {
+                "idledown": {crops:[{x:0, y:0, w:32, h:32}, {x:32, y:0, w:32, h:32}, {x:64, y:0, w:32, h:32}, {x:96, y:0, w:32, h:32}], holds:10},
+                "idleup": {crops:[{x:0, y:32, w:32, h:32}, {x:32, y:32, w:32, h:32}, {x:64, y:32, w:32, h:32}, {x:96, y:32, w:32, h:32}], holds:10},
+                "idleright": {crops:[{x:0, y:96, w:32, h:32}, {x:32, y:96, w:32, h:32}, {x:64, y:96, w:32, h:32}, {x:96, y:96, w:32, h:32}], holds:10},
+                "idleleft": {crops:[{x:0, y:64, w:32, h:32}, {x:32, y:64, w:32, h:32}, {x:64, y:64, w:32, h:32}, {x:96, y:64, w:32, h:32}], holds:10},
+                "walkdown": {crops:[{x:0, y:0, w:32, h:32}, {x:32, y:0, w:32, h:32}, {x:64, y:0, w:32, h:32}, {x:96, y:0, w:32, h:32}], holds:10},
+                "walkup": {crops:[{x:0, y:32, w:32, h:32}, {x:32, y:32, w:32, h:32}, {x:64, y:32, w:32, h:32}, {x:96, y:32, w:32, h:32}], holds:10},
+                "walkright": {crops:[{x:0, y:96, w:32, h:32}, {x:32, y:96, w:32, h:32}, {x:64, y:96, w:32, h:32}, {x:96, y:96, w:32, h:32}], holds:10},
+                "walkleft": {crops:[{x:0, y:64, w:32, h:32}, {x:32, y:64, w:32, h:32}, {x:64, y:64, w:32, h:32}, {x:96, y:64, w:32, h:32}], holds:10},
+            }
+
+            sprite["effects"] = {
+                "1": {crops:[{x:0, y:0, w:32, h:32}, {x:32, y:0, w:32, h:32}, {x:64, y:0, w:32, h:32}, {x:96, y:0, w:32, h:32}, {x:128, y:0, w:32, h:32}], holds:7},
+                "2": {crops:[{x:0, y:32, w:32, h:32}, {x:32, y:32, w:32, h:32}, {x:64, y:32, w:32, h:32}, {x:96, y:32, w:32, h:32}, {x:128, y:32, w:32, h:32}, {x:160, y:32, w:32, h:32}, {x:192, y:32, w:32, h:32}], holds:7},
+                "3": {crops:[{x:0, y:64, w:32, h:32}, {x:32, y:64, w:32, h:32}, {x:64, y:64, w:32, h:32}, {x:96, y:64, w:32, h:32}, {x:128, y:64, w:32, h:32}], holds:7},
+                "4": {crops:[{x:0, y:96, w:32, h:32}, {x:32, y:96, w:32, h:32}, {x:64, y:96, w:32, h:32}, {x:96, y:96, w:32, h:32}, {x:128, y:96, w:32, h:32}, {x:160, y:96, w:32, h:32}, {x:192, y:96, w:32, h:32}], holds:7},
+                "5": {crops:[{x:0, y:128, w:32, h:32}, {x:32, y:128, w:32, h:32}, {x:64, y:128, w:32, h:32}, {x:96, y:128, w:32, h:32}, {x:128, y:128, w:32, h:32}, {x:160, y:128, w:32, h:32}, {x:192, y:128, w:32, h:32}], holds:7},
+                "6": {crops:[{x:0, y:160, w:32, h:32}, {x:32, y:160, w:32, h:32}, {x:64, y:160, w:32, h:32}, {x:96, y:160, w:32, h:32}, {x:128, y:160, w:32, h:32}, {x:160, y:160, w:32, h:32}, {x:192, y:160, w:32, h:32}], holds:7},
+            }
+
+            const colorDeg = {default: "0deg", red: "0deg", orange: "30deg", yellow: "60deg", green: "120deg", cyan: "210deg", blue: "240deg", purple: "270deg"}
 
             function draw(x, y, name) {
                 // ctx.drawImage(
@@ -1144,6 +2046,15 @@
                 // ctx.filter = "hue-rotate(180deg)"
                 // ctx.filter = "contrast(0%)"
                 const spritesize = Math.round(tilesize * 1)
+
+                if (players[name].bodyColor !== "default") {
+                    if (colorDeg[players[name].bodyColor]) {
+                        ctx.filter = `hue-rotate(${colorDeg[players[name].bodyColor]})`
+                    } else {
+                        ctx.filter = `hue-rotate(${players[name].bodyColor})`
+                    }
+                }
+
                 ctx.drawImage(
                     assets[players[name].sprite],
                     motion.crops[nthmotion].x,
@@ -1174,9 +2085,27 @@
                 }
             }
 
-            function drawEffect(x, y) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
-                ctx.fillRect(Math.floor(x / tilesize) * tilesize, Math.floor(y / tilesize) * tilesize, tilesize, tilesize)
+            function drawEffect(effect) {
+                if (effect.sprite) {
+                    const frame = sprite["effects"][effect.sprite].crops[effect.animationFrame]
+                    // Effect Sprite
+                    ctx.drawImage(
+                        assets["effects"],
+                        frame.x,
+                        frame.y,
+                        frame.w,
+                        frame.h,
+                        Math.round(effect.x - tilesize / 2),
+                        Math.round(effect.y - tilesize / 2),
+                        tilesize,
+                        tilesize
+                    )
+
+                } else {
+                    // Simple white tile effect
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
+                    ctx.fillRect(Math.floor(effect.x / tilesize) * tilesize, Math.floor(effect.y / tilesize) * tilesize, tilesize, tilesize)
+                }
             }
 
             function drawName(name, x, y) {
@@ -1207,19 +2136,46 @@
             // }
 
             const testbg = new Image()
-            testbg.src = "https://img.itch.zone/aW1hZ2UvNzAzOTA4LzQ4NjEzOTYucG5n/original/WtbGHg.png"
+            // testbg.src = "https://img.itch.zone/aW1hZ2UvNzAzOTA4LzQ4NjEzOTYucG5n/original/WtbGHg.png"
+            testbg.src = imagefolder + "simplebackground.png"
+            let backgroundPattern
+            const backgroundScale = 2
+
+            testbg.addEventListener('load', updatePattern);
+            // window.addEventListener("resize", updatePattern);
+
+            function updatePattern() {
+                const offscreenCanvas = document.createElement('canvas');
+                offscreenCanvas.width = testbg.width * backgroundScale;
+                offscreenCanvas.height = testbg.height * backgroundScale;
+                const offscreenCtx = offscreenCanvas.getContext('2d');
+                offscreenCtx.imageSmoothingEnabled = false;
+                offscreenCtx.drawImage(testbg, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                backgroundPattern = ctx.createPattern(offscreenCanvas, 'repeat');
+            }
+            // testbg.addEventListener('load', () => {
+            //     const offscreenCanvas = document.createElement('canvas')
+            //     offscreenCanvas.width = testbg.width * backgroundScale
+            //     offscreenCanvas.height = testbg.height * backgroundScale
+            //     const offscreenCtx = offscreenCanvas.getContext('2d')
+            //     offscreenCtx.imageSmoothingEnabled = false;
+            //     offscreenCtx.drawImage(testbg, 0, 0, offscreenCanvas.width, offscreenCanvas.height)
+            //     backgroundPattern = ctx.createPattern(offscreenCanvas, 'repeat')
+            // })
 
             function drawbackground() {
                 if (gameOptions.seeBackground) {
-                    ctx.drawImage(
-                        testbg,
-                        0,
-                        0,
-                        800,
-                        800
-                    )
+                    // ctx.drawImage(
+                    //     testbg,
+                    //     0,
+                    //     0,
+                    //     canvas.width,
+                    //     canvas.height
+                    // )
+                    ctx.fillStyle = backgroundPattern
+                    ctx.fillRect(0, 0, canvas.width, canvas.height)
                 } else {
-                    ctx.fillStyle = 'white'
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
                     ctx.fillRect(0, 0, canvas.width, canvas.height)
                 }
             }
@@ -1358,6 +2314,21 @@
                 player.kill = newKill;
                 updatePlayerInTable(player, 'playerListByName', (a, b) => a.name.localeCompare(b.name));
                 updatePlayerInTable(player, 'playerListByKill', (a, b) => b.kill - a.kill);
+
+                player.exp += expPerKill
+                if (player.exp >= maxExp) {
+                    player.exp %= maxExp
+                    levelUp(name)
+                }
+            }
+
+            function levelUp(name) {
+                const player = players[name]
+                if (name === localUserName) {
+                    playSound("levelup")
+                    promoteLocalUser()
+                }
+                player.lv += 1
             }
 
             function updateDeathCount(name, newDeath) {
@@ -1368,6 +2339,10 @@
                 player.death = newDeath;
                 updatePlayerInTable(player, 'playerListByName', (a, b) => a.name.localeCompare(b.name));
                 updatePlayerInTable(player, 'playerListByKill', (a, b) => b.kill - a.kill);
+
+                if (name === localUserName) {
+                    playSound("end")
+                }
             }
 
             function updatePlayerInTable(player, tableId, compareFunction) {
@@ -1409,11 +2384,38 @@
                     style.innerHTML = '.dead { display: none; }'
                 }
             }
+
+            document.getElementById('toggleButtonSort').addEventListener('change', toggleListSort);
+
+            const playerlistbyName = document.getElementById('playerListByName');
+            const playerlistbyKill = document.getElementById('playerListByKill');
+            function toggleListSort() {
+                if (playerlistbyName.style.display === 'none') {
+                    playerlistbyName.style.display = 'table';
+                    playerlistbyKill.style.display = 'none';
+                } else {
+                    playerlistbyName.style.display = 'none';
+                    playerlistbyKill.style.display = 'table';
+                }
+            }
         </script>
 
         <script>
-            addPlayer(20, 20, 200, 200, localUserName, "swordman")
-            addPlayer(40, 40, 400, 100, "유비관우", "swordman")
+            function startGame() {
+                document.getElementById("modeMenu").style.display = "none"
+                animate()
+                playSound("start")
+                gameOptions.isGameStart = true
+            }
+        </script>
+
+        <script>
+            // addPlayer(40, 40, 400, 100, "유비관우", "slime")
+
+            addPlayer(20, 20, 200, 200, localUserName, "survivor", 1)
+            players[localUserName].sprite = "swordman"
+
+            // addPlayer(40, 40, 200, 400, "하항길다란이름아이디를ㄹ테스트해보자", "dragon")
         </script>
     </body>
 </html>
