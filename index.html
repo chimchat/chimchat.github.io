@@ -2230,6 +2230,14 @@
                 changeDestination(localUserName, xto, yto)
             })
 
+            canvas.addEventListener("touchstart", (event) => {
+                const rect = canvas.getBoundingClientRect();
+                const xto = event.touches[0].clientX - rect.left;
+                const yto = event.touches[0].clientY - rect.top;
+
+                changeDestination(localUserName, xto, yto);
+            });
+
             function changeDestination(name, xto, yto) {
                 players[name].xto = xto
                 players[name].yto = yto
