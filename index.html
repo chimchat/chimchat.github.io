@@ -138,7 +138,8 @@
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 font-size: 12px;
-                color: white;
+                color: blue;
+                font-weight: bold;
             }
 
             #gameScreenParent {
@@ -153,7 +154,9 @@
                 border: 3px solid #d3d3d3;
                 padding: 10px;
                 background-color: #f1f1f1;
-                margin-top: 40px;
+
+                position:absolute;
+                top: 80px;
             }
 
             #modeMenu {
@@ -261,19 +264,19 @@
 
                 <table id="playerListByName">
                     <tr>
-                        <th style="width: 120px;">Name</th>
-                        <th style="width: 30px;">Kill</th>
-                        <th style="width: 30px;">D</th>
-                        <th>Chat</th>
+                        <th style="width: 120px;">이름</th>
+                        <th style="width: 30px;">킬</th>
+                        <th style="width: 30px;">뎃</th>
+                        <th>유언</th>
                     </tr>
                 </table>
 
                 <table id="playerListByKill" style="display: none;">
                     <tr>
-                        <th style="width: 120px;">Name</th>
-                        <th style="width: 30px;">Kill</th>
-                        <th style="width: 30px;">D</th>
-                        <th>Chat</th>
+                        <th style="width: 120px;">이름</th>
+                        <th style="width: 30px;">킬</th>
+                        <th style="width: 30px;">뎃</th>
+                        <th>유언</th>
                     </tr>
                 </table>
             </div>
@@ -318,7 +321,10 @@
                 </div>
                 <button onclick="toggleDivVisibility('mapSizeChange')">맵 크기 변경</button>
                 <button onclick="goToModeMenu()">Start</button>
-                <button>Credit</button>
+                <button onclick="window.location.href = 'https://chimchat.github.io/credit.html'">Credit</button>
+                <button onclick="window.open('https://chimhaha.net/', '_blank')">침하하</button>
+
+
             </div>
 
 
@@ -1275,12 +1281,12 @@
                     // status.innerHTML = `${player.cool}`
 
                     // Chatting
-                    if (player.chatting !== '') {
+                    if (player.chattingTimeout > 0) {
                         player.chattingTimeout -= deltatime
-                        if (player.chattingTimeout < 0) {
-                            player.chatting = ''
-                            player.chattingTimeout = gameOptions.chattingTimeout
-                        }
+                        // if (player.chattingTimeout < 0) {
+                        //     player.chatting = ''
+                        //     player.chattingTimeout = gameOptions.chattingTimeout
+                        // }
                     }
 
                     // Damage shown
@@ -1458,7 +1464,7 @@
 
                 getplayersAt(Math.floor(x / tilesize) + Math.floor(y / tilesize) * xtiles).add(name)
 
-                addPlayerToTable(name, players[name].kill, players[name].death)
+                addPlayerToTable(name)
 
                 numberOfPlayers += 1
             }
@@ -1619,7 +1625,7 @@
         function drawChattings(lefttopcanvasX, lefttopcanvasY, renderBufferRange) {
             for (const name of alivePlayers) {
                 const player = players[name]
-                if (player.chatting !== '') {
+                if (player.chattingTimeout > 0) {
                     if (-renderBufferRange < player.x + lefttopcanvasX && player.x + lefttopcanvasX < window.innerWidth + renderBufferRange && -renderBufferRange < player.y + lefttopcanvasY && player.y + lefttopcanvasY < window.innerHeight + renderBufferRange) {
                         drawChatting(player.chatting, player.x, player.y)
                     }
@@ -2270,8 +2276,8 @@
 
         <!-- Tables on the screen -->
         <script>
-            function addPlayerToTable(name, kill, death) {
-                let player = {name, kill, death};
+            function addPlayerToTable(name) {
+                let player = players[name];
                 insertPlayerInOrder(player, 'playerListByName', (a, b) => a.name.localeCompare(b.name));
                 insertPlayerInOrder(player, 'playerListByKill', (a, b) => b.kill - a.kill);
             }
@@ -2286,11 +2292,20 @@
                 let row = table.insertRow(index + 1);  // Add 1 to account for the header row
                 row.insertCell(0).innerHTML = player.name;
                 row.insertCell(1).innerHTML = player.kill;
-                row.insertCell(2).innerHTML = player.death;
-                if (players[player.name].chatting !== "") {
-                    row.insertCell(3).innerHTML = players[player.name].chatting;
-                    console.log(players[player.name].chatting)
+
+                if (gameOptions.mode !== "chatVsChat") {
+                    row.insertCell(2).innerHTML = player.death;
+                } else {
+                    row.insertCell(2).innerHTML = `<span style="color: ${teamColorCode[players[player.name].team]}">${player.death}</span>`;
                 }
+
+                // if (player.chatting !== "") {
+                //     let msg = player.chatting
+                //     // if (gameOptions.mode === "chatVsChat") {
+                //     //     msg = `<span style="color: ${teamColorCode[players[player.name].team]}">${msg}</span>`
+                //     // }
+                //     row.insertCell(3).innerHTML = msg;
+                // }
             }
 
             function binarySearch(arr, x, compareFunction) {
@@ -2382,9 +2397,19 @@
                 let row = table.insertRow(newIndex + 1);  // Add 1 to account for the header row
                 row.insertCell(0).innerHTML = player.name;
                 row.insertCell(1).innerHTML = player.kill;
-                row.insertCell(2).innerHTML = player.death;
-                if (players[player.name].chatting !== "") {
-                    row.insertCell(3).innerHTML = players[player.name].chatting;
+
+                if (gameOptions.mode !== "chatVsChat") {
+                    row.insertCell(2).innerHTML = player.death;
+                } else {
+                    row.insertCell(2).innerHTML = `<span style="color: ${teamColorCode[players[player.name].team]}">${player.death}</span>`;
+                }
+
+                if (player.chatting !== "" && player.death > 0) {
+                    let msg = player.chatting
+                    // if (gameOptions.mode === "chatVsChat") {
+                    //     msg = `<span style="color: ${teamColorCode[players[player.name].team]}">${msg}</span>`
+                    // }
+                    row.insertCell(3).innerHTML = msg;
                 }
                 if (player.death > 0) {
                     row.classList.add('dead')
@@ -2428,7 +2453,7 @@
         <script>
             function startGame() {
                 document.getElementById("modeMenu").style.display = "none"
-                animate()
+                // animate()
                 playSound("start")
                 gameOptions.isGameStart = true
             }
@@ -2437,10 +2462,12 @@
         <script>
             // addPlayer(40, 40, 400, 100, "유비관우", "slime")
 
-            addPlayer(20, 20, 200, 200, localUserName, "survivor", 1, "Hi!")
+            addPlayer(10, 40, 2000, 40, localUserName, "survivor", 1, "Hi!")
             players[localUserName].sprite = "swordman"
 
             // addPlayer(40, 40, 200, 400, "하항길다란이름아이디를ㄹ테스트해보자", "dragon")
+
+            animate()
         </script>
     </body>
 </html>
